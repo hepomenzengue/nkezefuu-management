@@ -1,0 +1,95 @@
+name: Déploiement nkezefuu_recette (production)
+
+# Chaque push sur master part directement en production. Travailler sur une autre
+# branche, et ne fusionner dans master que ce qui doit être déployé.
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  verifier:
+    # Garde-fou avant tout déploiement : le service redémarré est celui de toute la
+    # coopérative. Un module installé qui ne se charge pas empêche Odoo d'ouvrir la
+    # base, et la production entière tombe, pas seulement la recette.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compiler le Python
+        run: python3 -m compileall -q nkezefuu_recette
+
+      - name: Vérifier les fichiers XML et CSV
+        run: |
+          python3 - <<'PY'
+          import csv, glob, sys
+          import xml.dom.minidom
+          erreurs = []
+          for f in glob.glob('nkezefuu_recette/**/*.xml', recursive=True):
+              try:
+                  xml.dom.minidom.parse(f)
+              except Exception as e:
+                  erreurs.append('%s : %s' % (f, e))
+          attendu = ['id', 'name', 'model_id/id', 'group_id/id', 'perm_read', 'perm_write', 'perm_create', 'perm_unlink']
+          for f in glob.glob('nkezefuu_recette/security/*.csv'):
+              with open(f, encoding='utf-8') as h:
+                  lignes = list(csv.reader(h))
+              if lignes[0] != attendu:
+                  erreurs.append('%s : en-tête inattendu' % f)
+              erreurs += ['%s ligne %d : %d colonnes' % (f, i + 1, len(l)) for i, l in enumerate(lignes) if len(l) != 8]
+          manifest = eval(open('nkezefuu_recette/__manifest__.py', encoding='utf-8').read())
+          import os
+          erreurs += ['fichier du manifeste absent : %s' % d for d in manifest.get('data', [])
+                      if not os.path.exists(os.path.join('nkezefuu_recette', d))]
+          print('\n'.join(erreurs) or 'Fichiers valides')
+          sys.exit(1 if erreurs else 0)
+          PY
+
+  deploy:
+    needs: verifier
+    runs-on: ubuntu-latest
+    # Un seul déploiement à la fois : deux pushes rapprochés feraient la queue au lieu
+    # d'écrire en même temps dans le même répertoire du VPS.
+    concurrency:
+      group: deploy-recette-production
+      cancel-in-progress: false
+    env:
+      DEPLOY_PATH: /opt/nkezefuu/production/nkezefuu-recette
+      SERVICE: nkezefuu_production
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd $DEPLOY_PATH || exit 1; \
+             git fetch --prune origin master || echo 'fetch en echec, poursuite avec la reference locale'; \
+             git reset --hard origin/master && \
+             echo 'Commit deploye :' && git log --oneline -1"
+
+      - name: Clear Python cache
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "find $DEPLOY_PATH -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; echo 'Cache Python nettoye'"
+
+      # Comme pour nkezefuu-addons, le module n'est pas mis à jour ici : un
+      # redémarrage recharge le Python, mais ne crée ni table ni colonne et ne
+      # recharge ni données ni droits. Après un changement de modèle, de droits ou
+      # de données, lancer -u nkezefuu_recette à la main.
+      - name: Restart Odoo service
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "sudo systemctl restart $SERVICE && echo \"Service $SERVICE redemarre avec succes\""
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

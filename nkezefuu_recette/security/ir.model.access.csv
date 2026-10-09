@@ -1,0 +1,9 @@
+id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
+access_recette_tableau_testeur,Recette tableau (Testeur),model_nkezefuu_recette_tableau,group_recette_testeur,1,0,0,0
+access_recette_tableau_dev,Recette tableau (Développeur mobile),model_nkezefuu_recette_tableau,group_recette_developpeur,1,0,0,0
+access_recette_section_testeur,Recette section (Testeur),model_nkezefuu_recette_section,group_recette_testeur,1,0,0,0
+access_recette_section_dev,Recette section (Développeur mobile),model_nkezefuu_recette_section,group_recette_developpeur,1,0,0,0
+access_recette_cas_testeur,Recette cas (Testeur),model_nkezefuu_recette_cas,group_recette_testeur,1,0,0,0
+access_recette_cas_dev,Recette cas (Développeur mobile),model_nkezefuu_recette_cas,group_recette_developpeur,1,0,0,0
+access_recette_echange_testeur,Recette échange (Testeur),model_nkezefuu_recette_echange,group_recette_testeur,1,0,0,0
+access_recette_echange_dev,Recette échange (Développeur mobile),model_nkezefuu_recette_echange,group_recette_developpeur,1,0,0,0

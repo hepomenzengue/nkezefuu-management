@@ -1,0 +1,1354 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par build_recette_xml.py, à partir des listes du classeur de recette.
+     noupdate="1" : créés à l'installation, jamais réécrits ensuite. Les corrections
+     faites depuis le site survivent donc aux mises à jour du module, et un cas
+     ajouté plus tard dans ce fichier sera créé sans toucher aux autres. -->
+<odoo noupdate="1">
+
+    <!-- ====================================================================== -->
+    <!-- Mes prêts -->
+    <!-- ====================================================================== -->
+
+        <record id="tableau_pr" model="nkezefuu.recette.tableau">
+            <field name="name">Mes prêts</field>
+            <field name="code">prets</field>
+            <field name="prefixe">PR</field>
+            <field name="sequence">10</field>
+            <field name="description">Le parcours du membre qui consulte ses prêts, en simule un et en demande un, puis celui du gestionnaire qui demande pour un autre.</field>
+        </record>
+
+        <record id="section_pr_1" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">1. Ouvrir l'écran "Mes prêts"</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="cas_pr_001" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_1"/>
+            <field name="numero">1</field>
+            <field name="sequence">10</field>
+            <field name="ecran">Mes prêts</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre "Mes prêts" alors que je n'ai encore aucun prêt.</field>
+            <field name="attendu">La liste est vide et m'indique que je n'ai pas de prêt. Le bouton "Demander un prêt" est bien visible.</field>
+        </record>
+        <record id="cas_pr_002" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_1"/>
+            <field name="numero">2</field>
+            <field name="sequence">20</field>
+            <field name="ecran">Mes prêts</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre "Mes prêts" alors que j'ai plusieurs prêts.</field>
+            <field name="attendu">Mes prêts s'affichent du plus récent au plus ancien, avec pour chacun la référence, le statut, le montant demandé, le motif et la date de la demande.</field>
+        </record>
+        <record id="cas_pr_003" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_1"/>
+            <field name="numero">3</field>
+            <field name="sequence">30</field>
+            <field name="ecran">Mes prêts</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je parcours toute la liste de mes prêts.</field>
+            <field name="attendu">Je ne vois que mes propres prêts. Aucun prêt d'un autre membre n'apparaît.</field>
+        </record>
+        <record id="cas_pr_004" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_1"/>
+            <field name="numero">4</field>
+            <field name="sequence">40</field>
+            <field name="ecran">Mes prêts</field>
+            <field name="profil">Membre défaillant</field>
+            <field name="action">J'ouvre "Mes prêts" avec un compte dont le statut est "Défaillant".</field>
+            <field name="attendu">Le bouton "Demander un prêt" n'apparaît pas, et mon statut "Défaillant" est visible à l'écran.</field>
+        </record>
+        <record id="cas_pr_005" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_1"/>
+            <field name="numero">5</field>
+            <field name="sequence">50</field>
+            <field name="ecran">Mes prêts</field>
+            <field name="profil">Membre invité</field>
+            <field name="action">J'ouvre "Mes prêts" avec un compte dont le type est "Invité".</field>
+            <field name="attendu">Le bouton "Demander un prêt" n'apparaît pas, même si je suis à jour de mes obligations.</field>
+        </record>
+        <record id="cas_pr_006" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_1"/>
+            <field name="numero">6</field>
+            <field name="sequence">60</field>
+            <field name="ecran">Mes prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">J'ouvre "Mes prêts" avec un compte gestionnaire.</field>
+            <field name="attendu">Je ne vois que mes prêts personnels. Sur cet écran, un gestionnaire est traité comme n'importe quel membre.</field>
+        </record>
+
+        <record id="section_pr_2" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">2. Consulter le détail d'un prêt</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="cas_pr_007" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">7</field>
+            <field name="sequence">70</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre un prêt validé sur lequel je n'ai encore rien remboursé.</field>
+            <field name="attendu">0 % remboursé. Le reste à payer est égal au montant total à rembourser. Aucune échéance n'est marquée payée.</field>
+        </record>
+        <record id="cas_pr_008" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">8</field>
+            <field name="sequence">80</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre un prêt dont une échéance a été réglée en deux paiements partiels.</field>
+            <field name="attendu">L'échéancier garde une seule ligne par mois, et non une ligne par paiement. L'échéance n'est marquée payée que lorsque le cumul versé couvre le montant dû.</field>
+        </record>
+        <record id="cas_pr_009" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">9</field>
+            <field name="sequence">90</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre un prêt entièrement remboursé.</field>
+            <field name="attendu">100 % remboursé, toutes les échéances sont marquées payées, et le reste à payer ne contient plus que l'assurance éventuellement due.</field>
+        </record>
+        <record id="cas_pr_010" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">10</field>
+            <field name="sequence">100</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre un prêt encore en brouillon.</field>
+            <field name="attendu">Les montants remboursés sont à zéro et l'échéancier est vide : rien n'a encore été engagé.</field>
+        </record>
+        <record id="cas_pr_011" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">11</field>
+            <field name="sequence">110</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre un prêt qui a des assurances.</field>
+            <field name="attendu">Je vois les lignes d'assurance avec leur date, leur montant et le fait qu'elles soient payées ou non, ainsi qu'un total assurance supérieur à zéro.</field>
+        </record>
+        <record id="cas_pr_012" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">12</field>
+            <field name="sequence">120</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je compare le total assurance affiché en haut avec la somme des lignes d'assurance listées plus bas.</field>
+            <field name="attendu">Les deux montants sont identiques. Le total est bien la somme des lignes affichées.</field>
+        </record>
+        <record id="cas_pr_013" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_2"/>
+            <field name="numero">13</field>
+            <field name="sequence">130</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'ouvre un prêt dont une assurance vient d'être payée au back-office.</field>
+            <field name="attendu">Le pourcentage remboursé a augmenté et le reste à payer a baissé du montant de l'assurance payée. L'assurance compte dans le remboursement.</field>
+        </record>
+
+        <record id="section_pr_3" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">3. Demander un prêt : le montant</field>
+            <field name="sequence">30</field>
+        </record>
+        <record id="cas_pr_014" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">14</field>
+            <field name="sequence">140</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je laisse le montant vide et j'essaie de continuer.</field>
+            <field name="attendu">Un message me demande de saisir le montant. Rien n'est envoyé au serveur.</field>
+        </record>
+        <record id="cas_pr_015" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">15</field>
+            <field name="sequence">150</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis 0 comme montant et je valide.</field>
+            <field name="attendu">La demande est refusée, avec un message m'indiquant qu'il faut un montant positif.</field>
+        </record>
+        <record id="cas_pr_016" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">16</field>
+            <field name="sequence">160</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'essaie de saisir un montant négatif.</field>
+            <field name="attendu">Soit la saisie est impossible, soit la demande est refusée avec un message clair. Dans les deux cas, aucun prêt n'est créé.</field>
+        </record>
+        <record id="cas_pr_017" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">17</field>
+            <field name="sequence">170</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un montant inférieur au minimum fixé par la coopérative.</field>
+            <field name="attendu">La demande est refusée, et le message m'indique le montant minimum autorisé.</field>
+        </record>
+        <record id="cas_pr_018" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">18</field>
+            <field name="sequence">180</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un montant exactement égal au minimum autorisé.</field>
+            <field name="attendu">La demande est acceptée : le minimum est inclus.</field>
+        </record>
+        <record id="cas_pr_019" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">19</field>
+            <field name="sequence">190</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un montant exactement égal à mon plafond de prêt.</field>
+            <field name="attendu">La demande est acceptée : le plafond est inclus.</field>
+        </record>
+        <record id="cas_pr_020" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">20</field>
+            <field name="sequence">200</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un montant juste au-dessus de mon plafond de prêt.</field>
+            <field name="attendu">La demande est refusée avant même d'être envoyée, et le message m'indique mon plafond actuel ainsi que la conduite à tenir.</field>
+        </record>
+        <record id="cas_pr_021" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_3"/>
+            <field name="numero">21</field>
+            <field name="sequence">210</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre sans investissement</field>
+            <field name="action">J'essaie de demander un prêt avec un compte dont le plafond est à zéro.</field>
+            <field name="attendu">Toute demande est refusée, et le plafond affiché est bien de 0 FCFA.</field>
+        </record>
+
+        <record id="section_pr_4" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">4. Demander un prêt : taux, durée, exonération et motif</field>
+            <field name="sequence">40</field>
+        </record>
+        <record id="cas_pr_022" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">22</field>
+            <field name="sequence">220</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je laisse le taux d'intérêt vide et je valide.</field>
+            <field name="attendu">Un message me demande le taux. La demande ne part pas.</field>
+        </record>
+        <record id="cas_pr_023" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">23</field>
+            <field name="sequence">230</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un taux d'intérêt négatif.</field>
+            <field name="attendu">La demande est refusée : le taux doit être positif ou nul.</field>
+        </record>
+        <record id="cas_pr_024" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">24</field>
+            <field name="sequence">240</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un taux inférieur au taux minimum de la coopérative.</field>
+            <field name="attendu">La demande est refusée, et le message m'indique le taux minimum.</field>
+        </record>
+        <record id="cas_pr_025" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">25</field>
+            <field name="sequence">250</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis un taux exactement égal au taux minimum.</field>
+            <field name="attendu">La demande est acceptée.</field>
+        </record>
+        <record id="cas_pr_026" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">26</field>
+            <field name="sequence">260</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je laisse la durée de remboursement vide et je valide.</field>
+            <field name="attendu">Un message me demande la durée. La demande ne part pas.</field>
+        </record>
+        <record id="cas_pr_027" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">27</field>
+            <field name="sequence">270</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis une durée de 0 mois.</field>
+            <field name="attendu">La demande est refusée : la durée doit être positive.</field>
+        </record>
+        <record id="cas_pr_028" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">28</field>
+            <field name="sequence">280</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis une durée supérieure à la durée maximale autorisée.</field>
+            <field name="attendu">La demande est refusée, et le message m'indique la durée maximale en mois.</field>
+        </record>
+        <record id="cas_pr_029" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">29</field>
+            <field name="sequence">290</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je saisis une durée exactement égale à la durée maximale.</field>
+            <field name="attendu">La demande est acceptée, et l'échéancier compte autant de mensualités que de mois demandés.</field>
+        </record>
+        <record id="cas_pr_030" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">30</field>
+            <field name="sequence">300</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je choisis "Pas d'exonération" et je valide.</field>
+            <field name="attendu">La demande passe sans qu'on me demande de période d'exonération.</field>
+        </record>
+        <record id="cas_pr_031" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">31</field>
+            <field name="sequence">310</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je choisis une exonération partielle mais je laisse la période à zéro.</field>
+            <field name="attendu">La demande est refusée : il faut indiquer une période d'exonération.</field>
+        </record>
+        <record id="cas_pr_032" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">32</field>
+            <field name="sequence">320</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je demande 3 mois de remboursement et 3 mois d'exonération.</field>
+            <field name="attendu">La demande est refusée : la période d'exonération doit être strictement plus courte que la durée du remboursement.</field>
+        </record>
+        <record id="cas_pr_033" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">33</field>
+            <field name="sequence">330</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je demande 3 mois de remboursement et 1 mois d'exonération.</field>
+            <field name="attendu">La demande est acceptée, et l'échéancier montre bien l'effet de l'exonération sur les premiers mois.</field>
+        </record>
+        <record id="cas_pr_034" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">34</field>
+            <field name="sequence">340</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je laisse le motif vide et j'envoie la demande.</field>
+            <field name="attendu">La demande est refusée : le motif est obligatoire pour demander un prêt.</field>
+        </record>
+        <record id="cas_pr_035" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_4"/>
+            <field name="numero">35</field>
+            <field name="sequence">350</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je laisse le motif vide et je lance seulement une simulation.</field>
+            <field name="attendu">La simulation fonctionne : le motif n'est pas exigé pour simuler, seulement pour demander.</field>
+        </record>
+
+        <record id="section_pr_5" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">5. Simuler avant de demander</field>
+            <field name="sequence">50</field>
+        </record>
+        <record id="cas_pr_036" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_5"/>
+            <field name="numero">36</field>
+            <field name="sequence">360</field>
+            <field name="ecran">Simulation</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je remplis correctement tous les champs et je lance la simulation.</field>
+            <field name="attendu">Le tableau des mensualités s'affiche avec autant de lignes que de mois demandés, et le total du capital correspond au montant que j'ai demandé.</field>
+        </record>
+        <record id="cas_pr_037" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_5"/>
+            <field name="numero">37</field>
+            <field name="sequence">370</field>
+            <field name="ecran">Simulation</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Après avoir simulé, je retourne sur "Mes prêts".</field>
+            <field name="attendu">Aucun prêt n'a été créé : la liste est exactement la même qu'avant la simulation. Simuler n'engage à rien.</field>
+        </record>
+        <record id="cas_pr_038" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_5"/>
+            <field name="numero">38</field>
+            <field name="sequence">380</field>
+            <field name="ecran">Simulation</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je modifie le montant puis je relance la simulation.</field>
+            <field name="attendu">Les mensualités et les totaux sont recalculés avec le nouveau montant, sans trace de l'ancien résultat.</field>
+        </record>
+        <record id="cas_pr_039" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_5"/>
+            <field name="numero">39</field>
+            <field name="sequence">390</field>
+            <field name="ecran">Simulation</field>
+            <field name="profil">Membre défaillant</field>
+            <field name="action">Je lance une simulation avec un petit montant depuis un compte défaillant.</field>
+            <field name="attendu">La simulation est refusée, avec un message expliquant que mon statut m'empêche de recevoir un crédit. Le montant n'y change rien.</field>
+        </record>
+        <record id="cas_pr_040" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_5"/>
+            <field name="numero">40</field>
+            <field name="sequence">400</field>
+            <field name="ecran">Simulation</field>
+            <field name="profil">Membre invité</field>
+            <field name="action">Je lance une simulation depuis un compte de type "Invité".</field>
+            <field name="attendu">La simulation est refusée, avec un message expliquant que mon statut m'empêche de recevoir un crédit.</field>
+        </record>
+
+        <record id="section_pr_6" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">6. Envoyer la demande</field>
+            <field name="sequence">60</field>
+        </record>
+        <record id="cas_pr_041" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_6"/>
+            <field name="numero">41</field>
+            <field name="sequence">410</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je remplis une demande correcte et je l'envoie.</field>
+            <field name="attendu">Le prêt est créé, daté du jour, à mon nom, avec son échéancier complet. Je le retrouve immédiatement dans "Mes prêts".</field>
+        </record>
+        <record id="cas_pr_042" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_6"/>
+            <field name="numero">42</field>
+            <field name="sequence">420</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'appuie deux fois très rapidement sur le bouton d'envoi.</field>
+            <field name="attendu">Un seul prêt est créé. Le bouton doit se désactiver pendant l'envoi pour empêcher le doublon.</field>
+        </record>
+        <record id="cas_pr_043" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_6"/>
+            <field name="numero">43</field>
+            <field name="sequence">430</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je coupe le réseau pendant l'envoi de la demande, puis je le rétablis et je rouvre "Mes prêts".</field>
+            <field name="attendu">Un message d'erreur compréhensible s'affiche, et je ne retrouve pas deux fois le même prêt dans ma liste.</field>
+        </record>
+        <record id="cas_pr_044" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_6"/>
+            <field name="numero">44</field>
+            <field name="sequence">440</field>
+            <field name="ecran">Formulaire de demande</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">J'envoie une demande alors que l'administrateur n'a pas encore configuré l'assurance par défaut de la coopérative.</field>
+            <field name="attendu">La demande est refusée avec un message demandant d'assurer le projet de prêt, et aucun prêt n'est créé.</field>
+        </record>
+
+        <record id="section_pr_7" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="name">7. Liste des prêts, côté gestionnaire</field>
+            <field name="sequence">70</field>
+        </record>
+        <record id="cas_pr_045" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">45</field>
+            <field name="sequence">450</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je cherche l'écran "Liste des prêts" avec un compte membre ordinaire.</field>
+            <field name="attendu">L'écran ne m'est pas proposé. Il est réservé aux gestionnaires et aux administrateurs.</field>
+        </record>
+        <record id="cas_pr_046" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">46</field>
+            <field name="sequence">460</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">J'ouvre "Liste des prêts".</field>
+            <field name="attendu">Je vois une ligne par emprunteur, et non une ligne par prêt, avec son nombre de prêts et son encours. Le plus gros encours est en premier.</field>
+        </record>
+        <record id="cas_pr_047" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">47</field>
+            <field name="sequence">470</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je regarde un emprunteur qui a une échéance dépassée et non réglée.</field>
+            <field name="attendu">Il est signalé en rouge comme étant en retard, même s'il a déjà beaucoup remboursé.</field>
+        </record>
+        <record id="cas_pr_048" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">48</field>
+            <field name="sequence">480</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je regarde un emprunteur "Invité" ou "Exclu" qui n'a aucun retard.</field>
+            <field name="attendu">Il est signalé en orange à cause de son statut de membre.</field>
+        </record>
+        <record id="cas_pr_049" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">49</field>
+            <field name="sequence">490</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je regarde un emprunteur en règle qui a tout remboursé.</field>
+            <field name="attendu">Il est signalé en vert, avec 100 % remboursé et un encours à zéro.</field>
+        </record>
+        <record id="cas_pr_050" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">50</field>
+            <field name="sequence">500</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je regarde un emprunteur dont le prêt vient d'être validé et dont la première échéance n'est pas encore arrivée.</field>
+            <field name="attendu">Il est signalé en gris comme n'ayant pas démarré ses remboursements, et non en retard.</field>
+        </record>
+        <record id="cas_pr_051" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">51</field>
+            <field name="sequence">510</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je regarde un emprunteur à la fois défaillant et en retard de paiement.</field>
+            <field name="attendu">C'est le retard qui s'affiche, pas le statut de membre : le retard réel est prioritaire.</field>
+        </record>
+        <record id="cas_pr_052" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">52</field>
+            <field name="sequence">520</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je regarde un emprunteur qui n'a qu'un prêt en brouillon.</field>
+            <field name="attendu">Sa ligne est bien présente, avec un prêt au compteur mais aucun prêt actif et un encours de zéro.</field>
+        </record>
+        <record id="cas_pr_053" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">53</field>
+            <field name="sequence">530</field>
+            <field name="ecran">Liste des prêts</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">J'ouvre "Liste des prêts" alors que j'ai moi-même des prêts en cours.</field>
+            <field name="attendu">J'apparais dans la liste comme n'importe quel autre emprunteur.</field>
+        </record>
+        <record id="cas_pr_054" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">54</field>
+            <field name="sequence">540</field>
+            <field name="ecran">Choix du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je touche "Demander un prêt" puis je tape une seule lettre dans la recherche de membre.</field>
+            <field name="attendu">La liste propose les membres dont le nom, l'identifiant ou le téléphone commence par cette lettre, en majuscules comme en minuscules.</field>
+        </record>
+        <record id="cas_pr_055" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">55</field>
+            <field name="sequence">550</field>
+            <field name="ecran">Choix du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je cherche "nel" pour trouver le membre "KENMOE Nelson".</field>
+            <field name="attendu">Il n'est pas trouvé : la recherche porte sur le début du nom, pas sur un fragment au milieu. Ce point doit être compris du gestionnaire.</field>
+        </record>
+        <record id="cas_pr_056" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">56</field>
+            <field name="sequence">560</field>
+            <field name="ecran">Choix du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je cherche un membre en tapant le début de son identifiant, par exemple "M00".</field>
+            <field name="attendu">Le membre est trouvé : la recherche fonctionne aussi sur l'identifiant.</field>
+        </record>
+        <record id="cas_pr_057" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">57</field>
+            <field name="sequence">570</field>
+            <field name="ecran">Choix du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je cherche un membre en tapant le début de son numéro de téléphone.</field>
+            <field name="attendu">Le membre est trouvé : la recherche fonctionne aussi sur le téléphone.</field>
+        </record>
+        <record id="cas_pr_058" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">58</field>
+            <field name="sequence">580</field>
+            <field name="ecran">Choix du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je cherche une lettre à laquelle correspondent plus de trente membres.</field>
+            <field name="attendu">Trente membres au maximum sont proposés, par ordre alphabétique, sans que l'écran ne rame ni ne plante.</field>
+        </record>
+        <record id="cas_pr_059" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">59</field>
+            <field name="sequence">590</field>
+            <field name="ecran">Choix du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je cherche un membre défaillant dans la liste des demandeurs.</field>
+            <field name="attendu">Il apparaît dans les résultats mais il est grisé : je ne peux pas le choisir comme demandeur.</field>
+        </record>
+        <record id="cas_pr_060" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">60</field>
+            <field name="sequence">600</field>
+            <field name="ecran">Contexte du demandeur</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je choisis un demandeur dans la liste.</field>
+            <field name="attendu">Je vois ses prêts à lui, son plafond à lui et son statut à lui. Aucune de mes propres informations n'apparaît.</field>
+        </record>
+        <record id="cas_pr_061" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">61</field>
+            <field name="sequence">610</field>
+            <field name="ecran">Avalistes</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Dans la recherche d'avalistes, je cherche le nom du demandeur lui-même.</field>
+            <field name="attendu">Le demandeur est absent des avalistes possibles, alors que les autres membres au nom proche sont bien proposés.</field>
+        </record>
+        <record id="cas_pr_062" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">62</field>
+            <field name="sequence">620</field>
+            <field name="ecran">Avalistes</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je cherche un membre défaillant comme avaliste.</field>
+            <field name="attendu">Il est proposé : le statut du membre ne l'empêche pas d'être avaliste.</field>
+        </record>
+        <record id="cas_pr_063" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">63</field>
+            <field name="sequence">630</field>
+            <field name="ecran">Avalistes</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">J'ajoute deux avalistes à la demande, puis je l'envoie.</field>
+            <field name="attendu">Les deux avalistes figurent bien sur le prêt créé, dans l'ordre où je les ai ajoutés.</field>
+        </record>
+        <record id="cas_pr_064" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">64</field>
+            <field name="sequence">640</field>
+            <field name="ecran">Avalistes</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">J'envoie une demande sans désigner aucun avaliste.</field>
+            <field name="attendu">La demande passe : l'avaliste n'est pas obligatoire.</field>
+        </record>
+        <record id="cas_pr_065" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">65</field>
+            <field name="sequence">650</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je remplis et j'envoie une demande pour le compte d'un autre membre.</field>
+            <field name="attendu">Le prêt créé est au nom du membre choisi, et non au mien. Je le retrouve dans ses prêts, pas dans les miens.</field>
+        </record>
+        <record id="cas_pr_066" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">66</field>
+            <field name="sequence">660</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je demande pour un membre un montant supérieur à son plafond.</field>
+            <field name="attendu">Une alerte m'avertit du dépassement, mais la demande passe : pour un tiers, le plafond est un avertissement, pas un blocage.</field>
+        </record>
+        <record id="cas_pr_067" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">67</field>
+            <field name="sequence">670</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je me choisis moi-même comme demandeur, avec un montant supérieur à mon propre plafond.</field>
+            <field name="attendu">La demande est refusée : je ne peux pas contourner mon propre plafond en passant par cet écran.</field>
+        </record>
+        <record id="cas_pr_068" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">68</field>
+            <field name="sequence">680</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je me choisis moi-même comme demandeur, avec un montant inférieur à mon plafond.</field>
+            <field name="attendu">La demande est acceptée : un gestionnaire peut emprunter pour lui-même dans la limite de son plafond.</field>
+        </record>
+        <record id="cas_pr_069" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">69</field>
+            <field name="sequence">690</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je choisis un demandeur défaillant et j'envoie la demande.</field>
+            <field name="attendu">La demande est refusée, avec un message qui nomme le membre concerné et explique son statut.</field>
+        </record>
+        <record id="cas_pr_070" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">70</field>
+            <field name="sequence">700</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je choisis un demandeur de type "Invité" et j'envoie la demande.</field>
+            <field name="attendu">La demande est refusée, avec un message qui nomme le membre et explique son statut.</field>
+        </record>
+        <record id="cas_pr_071" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">71</field>
+            <field name="sequence">710</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Je choisis un projet comme demandeur et j'envoie la demande.</field>
+            <field name="attendu">La demande est acceptée : un projet peut emprunter, les conditions de statut ne s'appliquent qu'aux membres.</field>
+        </record>
+        <record id="cas_pr_072" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">72</field>
+            <field name="sequence">720</field>
+            <field name="ecran">Demande pour un tiers</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">Depuis le détail d'un prêt existant, je touche "Nouveau prêt pour ce membre".</field>
+            <field name="attendu">Le demandeur est déjà fixé, on ne me redemande pas qui c'est, et le prêt créé est bien au nom de ce membre.</field>
+        </record>
+        <record id="cas_pr_073" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_pr"/>
+            <field name="section_id" ref="section_pr_7"/>
+            <field name="numero">73</field>
+            <field name="sequence">730</field>
+            <field name="ecran">Détail du prêt</field>
+            <field name="profil">Gestionnaire</field>
+            <field name="action">J'ouvre le détail d'un prêt depuis la liste des prêts.</field>
+            <field name="attendu">Je vois le détail complet : les avalistes, les bénéfices et les assurances du prêt.</field>
+        </record>
+
+    <!-- ====================================================================== -->
+    <!-- Comptes bancaires -->
+    <!-- ====================================================================== -->
+
+        <record id="tableau_cb" model="nkezefuu.recette.tableau">
+            <field name="name">Comptes bancaires</field>
+            <field name="code">comptes_bancaires</field>
+            <field name="prefixe">CB</field>
+            <field name="sequence">20</field>
+            <field name="description">Les comptes bancaires, les dépôts et retraits, et les virements entre comptes, du côté du gestionnaire comme de l'administrateur.</field>
+        </record>
+
+        <record id="section_cb_1" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="name">1. Qui a accès à quoi</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="cas_cb_001" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_1"/>
+            <field name="numero">1</field>
+            <field name="sequence">10</field>
+            <field name="ecran">Accès</field>
+            <field name="profil">Membre en règle</field>
+            <field name="action">Je cherche un écran de comptes bancaires avec un compte membre ordinaire.</field>
+            <field name="attendu">Aucun écran de comptes bancaires ne m'est proposé.</field>
+        </record>
+        <record id="cas_cb_002" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_1"/>
+            <field name="numero">2</field>
+            <field name="sequence">20</field>
+            <field name="ecran">Accès</field>
+            <field name="profil">Gestionnaire nkezefuu</field>
+            <field name="action">Je cherche les écrans de comptes bancaires avec le seul rôle "Gestionnaire nkezefuu".</field>
+            <field name="attendu">Aucun accès. Ce rôle, même s'il donne beaucoup de droits ailleurs, ne donne rien sur les comptes bancaires.</field>
+        </record>
+        <record id="cas_cb_003" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_1"/>
+            <field name="numero">3</field>
+            <field name="sequence">30</field>
+            <field name="ecran">Accès</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'ouvre "Mes comptes bancaires" avec le rôle "Gestionnaire des comptes bancaires".</field>
+            <field name="attendu">Je vois uniquement les comptes dont je suis gestionnaire, avec pour chacun le compte général, la description et le solde.</field>
+        </record>
+        <record id="cas_cb_004" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_1"/>
+            <field name="numero">4</field>
+            <field name="sequence">40</field>
+            <field name="ecran">Accès</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'ouvre "Comptes bancaires" avec un compte administrateur.</field>
+            <field name="attendu">Je vois tous les comptes de la coopérative, avec le nom des gestionnaires de chaque compte.</field>
+        </record>
+        <record id="cas_cb_005" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_1"/>
+            <field name="numero">5</field>
+            <field name="sequence">50</field>
+            <field name="ecran">Accès</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">Je cherche l'écran "Mes comptes bancaires" en tant qu'administrateur.</field>
+            <field name="attendu">Cet écran ne m'est pas proposé : l'administrateur passe par l'écran global "Comptes bancaires".</field>
+        </record>
+        <record id="cas_cb_006" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_1"/>
+            <field name="numero">6</field>
+            <field name="sequence">60</field>
+            <field name="ecran">Accès</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je cherche l'écran global "Comptes bancaires" en tant que gestionnaire.</field>
+            <field name="attendu">Cet écran ne m'est pas proposé : je n'ai accès qu'à mes propres comptes.</field>
+        </record>
+
+        <record id="section_cb_2" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="name">2. Le bandeau de résumé en haut de l'écran</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="cas_cb_007" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_2"/>
+            <field name="numero">7</field>
+            <field name="sequence">70</field>
+            <field name="ecran">Bandeau de résumé</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'ouvre "Mes comptes bancaires" alors que j'ai des envois en cours et des réceptions en attente.</field>
+            <field name="attendu">Deux chiffres s'affichent en haut de l'écran : les envois en cours et les réceptions en attente, tous mes comptes confondus.</field>
+        </record>
+        <record id="cas_cb_008" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_2"/>
+            <field name="numero">8</field>
+            <field name="sequence">80</field>
+            <field name="ecran">Bandeau de résumé</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je touche le chiffre des envois.</field>
+            <field name="attendu">La liste "Mes envois" s'ouvre, du plus récent au plus ancien, avec le compte émetteur, le compte destinataire, le montant et le statut.</field>
+        </record>
+        <record id="cas_cb_009" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_2"/>
+            <field name="numero">9</field>
+            <field name="sequence">90</field>
+            <field name="ecran">Bandeau de résumé</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je touche le chiffre des réceptions.</field>
+            <field name="attendu">La liste "Mes réceptions" s'ouvre avec les virements en attente dont je suis le destinataire désigné, et le nom de celui qui me les envoie.</field>
+        </record>
+        <record id="cas_cb_010" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_2"/>
+            <field name="numero">10</field>
+            <field name="sequence">100</field>
+            <field name="ecran">Bandeau de résumé</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'ouvre "Comptes bancaires" en tant qu'administrateur et je regarde le bandeau.</field>
+            <field name="attendu">Un seul chiffre s'affiche, le nombre de virements en attente tous comptes confondus, et il n'ouvre aucune liste quand je le touche.</field>
+        </record>
+        <record id="cas_cb_011" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_2"/>
+            <field name="numero">11</field>
+            <field name="sequence">110</field>
+            <field name="ecran">Bandeau de résumé</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un virement que je reçois, puis je reviens sur l'écran et je regarde le bandeau.</field>
+            <field name="attendu">Le chiffre des réceptions a baissé d'une unité. Le bandeau reflète la réalité du moment.</field>
+        </record>
+        <record id="cas_cb_012" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_2"/>
+            <field name="numero">12</field>
+            <field name="sequence">120</field>
+            <field name="ecran">Mes envois</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je regarde "Mes envois" après qu'un de mes virements a été validé par son destinataire.</field>
+            <field name="attendu">Le virement a disparu de "Mes envois", mais je le retrouve dans les virements du compte concerné. Rien n'est perdu.</field>
+        </record>
+
+        <record id="section_cb_3" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="name">3. Créer et modifier un compte bancaire</field>
+            <field name="sequence">30</field>
+        </record>
+        <record id="cas_cb_013" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_3"/>
+            <field name="numero">13</field>
+            <field name="sequence">130</field>
+            <field name="ecran">Nouveau compte</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">Je touche "Nouveau compte bancaire" et j'ouvre la liste des comptes comptables proposés.</field>
+            <field name="attendu">Seuls des comptes de trésorerie encore libres me sont proposés. Un compte déjà rattaché à un autre compte bancaire n'apparaît pas.</field>
+        </record>
+        <record id="cas_cb_014" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_3"/>
+            <field name="numero">14</field>
+            <field name="sequence">140</field>
+            <field name="ecran">Nouveau compte</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'ouvre la liste des gestionnaires que je peux désigner.</field>
+            <field name="attendu">Seuls les membres portant le rôle "Gestionnaire des comptes bancaires" me sont proposés.</field>
+        </record>
+        <record id="cas_cb_015" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_3"/>
+            <field name="numero">15</field>
+            <field name="sequence">150</field>
+            <field name="ecran">Nouveau compte</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'essaie de créer un compte sans désigner aucun gestionnaire.</field>
+            <field name="attendu">La création est refusée : au moins un gestionnaire est obligatoire.</field>
+        </record>
+        <record id="cas_cb_016" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_3"/>
+            <field name="numero">16</field>
+            <field name="sequence">160</field>
+            <field name="ecran">Nouveau compte</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">Je crée un compte avec un compte comptable libre, un gestionnaire et une description.</field>
+            <field name="attendu">Le compte apparaît dans la liste, avec un solde de départ à zéro et le gestionnaire que j'ai désigné.</field>
+        </record>
+        <record id="cas_cb_017" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_3"/>
+            <field name="numero">17</field>
+            <field name="sequence">170</field>
+            <field name="ecran">Modifier un compte</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">Je modifie seulement la description d'un compte existant.</field>
+            <field name="attendu">La description change, et le compte comptable comme les gestionnaires restent inchangés.</field>
+        </record>
+        <record id="cas_cb_018" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_3"/>
+            <field name="numero">18</field>
+            <field name="sequence">180</field>
+            <field name="ecran">Modifier un compte</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'ajoute un deuxième gestionnaire sur un compte existant.</field>
+            <field name="attendu">Ce gestionnaire voit désormais le compte dans son écran "Mes comptes bancaires".</field>
+        </record>
+
+        <record id="section_cb_4" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="name">4. Dépôts et retraits</field>
+            <field name="sequence">40</field>
+        </record>
+        <record id="cas_cb_019" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">19</field>
+            <field name="sequence">190</field>
+            <field name="ecran">Mouvements bancaires</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je déplie un compte et j'ouvre "Mouvements bancaires".</field>
+            <field name="attendu">Je vois tous les dépôts et retraits du compte, les brouillons comme ceux déjà réalisés, avec le type, le bénéficiaire, le montant, le statut et qui les a créés.</field>
+        </record>
+        <record id="cas_cb_020" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">20</field>
+            <field name="sequence">200</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je crée une transaction et j'ouvre la recherche du bénéficiaire.</field>
+            <field name="attendu">Seuls des membres me sont proposés. Aucun projet n'apparaît dans la liste des bénéficiaires possibles.</field>
+        </record>
+        <record id="cas_cb_021" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">21</field>
+            <field name="sequence">210</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je regarde le champ de date sur le formulaire de transaction.</field>
+            <field name="attendu">La date n'est pas saisissable : c'est celle du jour, posée par le serveur.</field>
+        </record>
+        <record id="cas_cb_022" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">22</field>
+            <field name="sequence">220</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je prépare un retrait d'un montant supérieur au solde du bénéficiaire, et je touche "Enregistrer".</field>
+            <field name="attendu">La transaction est enregistrée en brouillon : le solde n'est contrôlé qu'au moment de la validation.</field>
+        </record>
+        <record id="cas_cb_023" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">23</field>
+            <field name="sequence">230</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide ce brouillon de retrait dont le bénéficiaire n'a pas les fonds.</field>
+            <field name="attendu">La validation est refusée, avec un message indiquant le solde du bénéficiaire, et la transaction reste en brouillon sans rien casser.</field>
+        </record>
+        <record id="cas_cb_024" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">24</field>
+            <field name="sequence">240</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un dépôt alors que le compte bancaire lui-même n'est pas assez approvisionné.</field>
+            <field name="attendu">La validation est refusée, et le message parle bien du solde du compte bancaire, pas de celui du bénéficiaire. Un dépôt sort de l'argent du compte.</field>
+        </record>
+        <record id="cas_cb_025" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">25</field>
+            <field name="sequence">250</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un dépôt normal, puis je vérifie le solde du bénéficiaire et celui du compte.</field>
+            <field name="attendu">Le solde du bénéficiaire a augmenté du montant, et le solde du compte bancaire a baissé du même montant.</field>
+        </record>
+        <record id="cas_cb_026" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">26</field>
+            <field name="sequence">260</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un retrait normal, puis je vérifie le solde du bénéficiaire et celui du compte.</field>
+            <field name="attendu">Le solde du bénéficiaire a baissé du montant, et le solde du compte bancaire a augmenté du même montant.</field>
+        </record>
+        <record id="cas_cb_027" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">27</field>
+            <field name="sequence">270</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un retrait d'un montant supérieur à la moitié du solde du bénéficiaire, mais inférieur à ce solde.</field>
+            <field name="attendu">Le retrait passe sans aucun blocage. Seul le solde réel compte, et non une fraction de ce solde.</field>
+        </record>
+        <record id="cas_cb_028" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">28</field>
+            <field name="sequence">280</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un retrait d'un montant exactement égal au solde du bénéficiaire.</field>
+            <field name="attendu">Le retrait passe, et le solde du bénéficiaire tombe à zéro.</field>
+        </record>
+        <record id="cas_cb_029" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">29</field>
+            <field name="sequence">290</field>
+            <field name="ecran">Nouvelle transaction</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je crée une transaction en touchant directement "Valider" au lieu de "Enregistrer".</field>
+            <field name="attendu">La transaction est créée et immédiatement réalisée, exactement comme au back-office, sans passer par le brouillon.</field>
+        </record>
+        <record id="cas_cb_030" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">30</field>
+            <field name="sequence">300</field>
+            <field name="ecran">Modifier un brouillon</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je rouvre un brouillon que j'ai créé et je change le montant.</field>
+            <field name="attendu">Le montant est bien modifié, et je peux valider dans le même mouvement si je le souhaite.</field>
+        </record>
+        <record id="cas_cb_031" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">31</field>
+            <field name="sequence">310</field>
+            <field name="ecran">Modifier un brouillon</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'essaie de modifier le brouillon créé par un collègue gestionnaire du même compte.</field>
+            <field name="attendu">La modification est refusée : seul le créateur du brouillon, ou l'administrateur, peut y toucher.</field>
+        </record>
+        <record id="cas_cb_032" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">32</field>
+            <field name="sequence">320</field>
+            <field name="ecran">Annuler</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'essaie d'annuler une transaction déjà réalisée.</field>
+            <field name="attendu">L'annulation m'est refusée : elle est strictement réservée à l'administrateur, même pour celui qui a créé la transaction.</field>
+        </record>
+        <record id="cas_cb_033" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">33</field>
+            <field name="sequence">330</field>
+            <field name="ecran">Annuler</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'annule une transaction réalisée, puis je vérifie les soldes.</field>
+            <field name="attendu">L'annulation passe, et les soldes du bénéficiaire et du compte reviennent à leur état d'avant la transaction.</field>
+        </record>
+        <record id="cas_cb_034" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">34</field>
+            <field name="sequence">340</field>
+            <field name="ecran">Annuler</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'essaie d'annuler une transaction qui est déjà annulée ou encore en brouillon.</field>
+            <field name="attendu">L'annulation est refusée : seule une transaction réalisée peut être annulée.</field>
+        </record>
+        <record id="cas_cb_035" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_4"/>
+            <field name="numero">35</field>
+            <field name="sequence">350</field>
+            <field name="ecran">Mouvements bancaires</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Après avoir validé une transaction, je reviens sur la liste de mes comptes.</field>
+            <field name="attendu">Le solde affiché sur le compte est à jour, sans que j'aie besoin de fermer puis rouvrir l'application.</field>
+        </record>
+
+        <record id="section_cb_5" model="nkezefuu.recette.section">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="name">5. Virements entre comptes</field>
+            <field name="sequence">50</field>
+        </record>
+        <record id="cas_cb_036" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">36</field>
+            <field name="sequence">360</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je déplie un compte, j'ouvre "Virements bancaires" et je touche "Nouveau virement".</field>
+            <field name="attendu">Le compte émetteur est déjà pré-rempli avec le compte depuis lequel je suis parti.</field>
+        </record>
+        <record id="cas_cb_037" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">37</field>
+            <field name="sequence">370</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'ouvre la liste des comptes destinataires possibles.</field>
+            <field name="attendu">Le compte émetteur n'y figure pas : on ne peut pas virer un compte vers lui-même.</field>
+        </record>
+        <record id="cas_cb_038" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">38</field>
+            <field name="sequence">380</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je saisis un montant de 0, puis un montant négatif.</field>
+            <field name="attendu">Dans les deux cas, le virement est refusé : le montant doit être strictement positif.</field>
+        </record>
+        <record id="cas_cb_039" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">39</field>
+            <field name="sequence">390</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je regarde qui est désigné comme émetteur du virement.</field>
+            <field name="attendu">C'est moi, et je n'ai pas à le choisir. Un gestionnaire ne peut pas émettre au nom d'un collègue du même compte.</field>
+        </record>
+        <record id="cas_cb_040" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">40</field>
+            <field name="sequence">400</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">Je crée un virement en tant qu'administrateur et je regarde le champ de l'émetteur désigné.</field>
+            <field name="attendu">Je dois le choisir explicitement, et seuls les gestionnaires du compte émetteur retenu me sont proposés.</field>
+        </record>
+        <record id="cas_cb_041" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">41</field>
+            <field name="sequence">410</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">J'essaie de créer un virement sans désigner d'émetteur.</field>
+            <field name="attendu">La création est refusée : contrairement au gestionnaire, l'administrateur n'a pas d'émetteur implicite.</field>
+        </record>
+        <record id="cas_cb_042" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">42</field>
+            <field name="sequence">420</field>
+            <field name="ecran">Nouveau virement</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'enregistre un virement en brouillon, puis je regarde du côté du destinataire.</field>
+            <field name="attendu">Le virement est visible dans les virements du compte, mais il n'apparaît pas encore chez le destinataire : un brouillon n'est pas soumis.</field>
+        </record>
+        <record id="cas_cb_043" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">43</field>
+            <field name="sequence">430</field>
+            <field name="ecran">Soumettre</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je soumets mon brouillon de virement.</field>
+            <field name="attendu">Il passe en attente et apparaît aussitôt chez le destinataire désigné, dans ses réceptions.</field>
+        </record>
+        <record id="cas_cb_044" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">44</field>
+            <field name="sequence">440</field>
+            <field name="ecran">Annuler</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'annule un virement en attente dont je suis l'émetteur désigné.</field>
+            <field name="attendu">Le virement revient en brouillon, et il disparaît des réceptions du destinataire.</field>
+        </record>
+        <record id="cas_cb_045" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">45</field>
+            <field name="sequence">450</field>
+            <field name="ecran">Modifier</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'essaie de modifier un brouillon de virement émis par un collègue.</field>
+            <field name="attendu">La modification est refusée : seul l'émetteur désigné, ou l'administrateur, peut modifier le virement.</field>
+        </record>
+        <record id="cas_cb_046" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">46</field>
+            <field name="sequence">460</field>
+            <field name="ecran">Valider une réception</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je valide un virement en attente dont je suis le destinataire désigné, puis je vérifie les deux comptes.</field>
+            <field name="attendu">Le solde du compte émetteur a baissé, celui du compte destinataire a augmenté du même montant, et le virement est marqué comme validé.</field>
+        </record>
+        <record id="cas_cb_047" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">47</field>
+            <field name="sequence">470</field>
+            <field name="ecran">Valider une réception</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je regarde un virement en attente destiné à un collègue, sur un compte que je gère aussi.</field>
+            <field name="attendu">Les boutons Valider et Rejeter ne me sont pas proposés : gérer le compte ne suffit pas, il faut être le destinataire précisément désigné.</field>
+        </record>
+        <record id="cas_cb_048" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">48</field>
+            <field name="sequence">480</field>
+            <field name="ecran">Rejeter une réception</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">Je rejette un virement en attente dont je suis le destinataire désigné.</field>
+            <field name="attendu">Le virement est marqué rejeté, les soldes des deux comptes n'ont pas bougé, et je suis averti avant de confirmer que c'est définitif.</field>
+        </record>
+        <record id="cas_cb_049" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">49</field>
+            <field name="sequence">490</field>
+            <field name="ecran">Valider une réception</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'essaie de valider ou de rejeter un virement déjà validé ou déjà rejeté.</field>
+            <field name="attendu">L'action est refusée : une fois traité, un virement ne revient jamais en arrière.</field>
+        </record>
+        <record id="cas_cb_050" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">50</field>
+            <field name="sequence">500</field>
+            <field name="ecran">Annuler</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'essaie d'annuler un virement déjà validé.</field>
+            <field name="attendu">L'annulation est refusée : seul un virement encore en attente peut être annulé.</field>
+        </record>
+        <record id="cas_cb_051" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">51</field>
+            <field name="sequence">510</field>
+            <field name="ecran">Valider une réception</field>
+            <field name="profil">Administrateur</field>
+            <field name="action">Je valide un virement en attente qui n'est pas destiné à moi.</field>
+            <field name="attendu">La validation passe : l'administrateur peut agir sur n'importe quel virement, sans être l'acteur désigné.</field>
+        </record>
+        <record id="cas_cb_052" model="nkezefuu.recette.cas">
+            <field name="tableau_id" ref="tableau_cb"/>
+            <field name="section_id" ref="section_cb_5"/>
+            <field name="numero">52</field>
+            <field name="sequence">520</field>
+            <field name="ecran">Virements du compte</field>
+            <field name="profil">Gestionnaire de comptes</field>
+            <field name="action">J'ouvre "Virements bancaires" sur un compte partagé avec un autre gestionnaire.</field>
+            <field name="attendu">Je vois aussi les virements émis ou reçus par mon collègue sur ce compte, et pas seulement les miens.</field>
+        </record>
+
+</odoo>

@@ -1,0 +1,34 @@
+<odoo>
+    <data>
+
+        <record id="module_category_recette" model="ir.module.category">
+            <field name="name">Recette NKEZEFUU</field>
+            <field name="description">Recette fonctionnelle de l'application mobile</field>
+        </record>
+
+        <!-- Aucun de ces groupes n'implique base.group_user : ils ne donnent par
+             eux-mêmes aucun accès au back-office, et peuvent donc être portés par un
+             utilisateur portail (le développeur mobile en particulier). -->
+        <record id="group_recette_testeur" model="res.groups">
+            <field name="name">Testeur</field>
+            <field name="category_id" ref="module_category_recette"/>
+        </record>
+
+        <record id="group_recette_admin" model="res.groups">
+            <field name="name">Admin testeur</field>
+            <field name="implied_ids" eval="[(4, ref('group_recette_testeur'))]"/>
+            <field name="category_id" ref="module_category_recette"/>
+        </record>
+
+        <record id="group_recette_developpeur" model="res.groups">
+            <field name="name">Développeur mobile</field>
+            <field name="category_id" ref="module_category_recette"/>
+        </record>
+
+        <!-- Un administrateur système est Admin testeur sans rien avoir à cocher. -->
+        <record id="base.group_system" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('group_recette_admin'))]"/>
+        </record>
+
+    </data>
+</odoo>
