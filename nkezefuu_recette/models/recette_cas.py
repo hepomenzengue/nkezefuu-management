@@ -31,7 +31,7 @@ BALLES = [
 RESULTATS_OK = ('ok', 'ok_apres_correction')
 RESULTATS_EN_ECHEC = ('ko', 'toujours_ko', 'regression')
 
-# Ce que le testeur peut poser selon que le développeur a répondu en dernier ou non.
+# Ce que le testeur peut poser selon que le développeur a répondu en dernier ou non .
 # Après une réponse, il confirme ou conteste ; sans réponse, il constate.
 RESULTATS_SANS_REPONSE = ('ok', 'ko', 'bloque', 'regression')
 RESULTATS_APRES_REPONSE = ('ok', 'ok_apres_correction', 'toujours_ko', 'bloque')
