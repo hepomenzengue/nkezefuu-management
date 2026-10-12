@@ -41,7 +41,7 @@ RESULTATS_APRES_REPONSE = ('ok', 'ok_apres_correction', 'toujours_ko', 'bloque')
 RESULTATS_AVEC_CONSTAT = ('ko', 'toujours_ko', 'regression', 'bloque')
 
 # Le développeur ne peut répondre que si le testeur lui a renvoyé la balle, ou pour
-# compléter sa propre réponse tant que le testeur n'a pas repris la main.
+# compléter sa propre réponse tant que le testeur n'a pas repris la main .
 RESULTATS_A_TRAITER = ('ko', 'toujours_ko', 'regression', 'bloque')
 
 # Une réponse sans explication n'est acceptée que pour « En cours ».
