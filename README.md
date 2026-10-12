@@ -54,7 +54,8 @@ Toutes sous `/api/recette`, jeton Bearer, réponse HTTP 200 avec le vrai résult
 | `POST /login` | identifiant et mot de passe contre une paire de jetons |
 | `POST /refresh` | nouvelle paire contre le jeton de renouvellement |
 | `POST /logout` | révoque la paire du jeton d'accès |
-| `GET /moi` | l'utilisateur connecté et ses profils |
+| `GET /moi` | l'utilisateur connecté (nom, identifiant) et ses profils |
+| `POST /moi/mot-de-passe` | changer son mot de passe ; révoque les autres connexions et renvoie une nouvelle paire |
 | `GET /tableaux` | les tableaux et leurs compteurs |
 | `POST /tableaux` | créer un tableau (admin testeur) |
 | `GET /tableaux/{code}` | le tableau complet ; filtres `balle=moi`, `resultat=ko,regression`, `archives=1` |
@@ -72,6 +73,13 @@ renouvellement valable 30 jours (`refresh_token`). Quand une route répond 401, 
 `/refresh` avec le jeton de renouvellement : il est consommé et remplacé par une
 nouvelle paire, et ne peut pas être rejoué. Seules les empreintes des jetons sont
 stockées en base. Un compte archivé perd ses accès immédiatement.
+
+`/moi/mot-de-passe` attend `ancien_mot_de_passe` et `nouveau_mot_de_passe` (8 caractères
+au moins, différent de l'actuel). Il passe par la même protection contre les essais en
+rafale que la connexion (`customstatus` 429 pendant le délai d'attente). Un mot de
+passe actuel faux renvoie 400, et non 401, pour que le site ne le prenne pas pour une
+session expirée. En cas de succès, toutes les paires du compte sont révoquées et la
+réponse est la session complète, comme `/login` : le site remplace ses jetons.
 
 ## Déploiement
 

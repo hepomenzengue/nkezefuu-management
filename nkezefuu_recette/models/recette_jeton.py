@@ -83,3 +83,8 @@ class RecetteJeton(models.Model):
         """Déconnexion : supprime la paire de ce jeton d'accès."""
         if acces:
             self.sudo().search([('empreinte_acces', '=', _empreinte(acces))]).unlink()
+
+    @api.model
+    def _revoquer_tout(self, user):
+        """Supprime toutes les paires de l'utilisateur, sur tous ses appareils."""
+        self.sudo().search([('user_id', '=', user.id)]).unlink()

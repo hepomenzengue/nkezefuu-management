@@ -14,6 +14,10 @@ from ..models.res_users import ADMIN
 
 _logger = logging.getLogger(__name__)
 
+# Odoo de base ne refuse que le mot de passe vide : le module de politique de mots de
+# passe n'est pas installé sur cette instance.
+LONGUEUR_MIN_MOT_DE_PASSE = 8
+
 
 class RecetteController(http.Controller):
     """API de la recette fonctionnelle, appelée par le site apps-docs.nkezefuu.com.
@@ -229,8 +233,12 @@ class RecetteController(http.Controller):
     # ------------------------------------------------------------------
     # Connexion
     # ------------------------------------------------------------------
+    @staticmethod
+    def _profil(user):
+        return {'id': user.id, 'name': user.name, 'login': user.login, 'roles': sorted(user._recette_roles())}
+
     def _session(self, user, paire):
-        return dict(paire, user={'id': user.id, 'name': user.name, 'roles': sorted(user._recette_roles())})
+        return dict(paire, user=self._profil(user))
 
     @http.route('/api/recette/login', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def login(self, **kw):
@@ -292,8 +300,67 @@ class RecetteController(http.Controller):
     @http.route('/api/recette/moi', type='http', methods=['GET', 'OPTIONS'], auth="none", csrf=False)
     def moi(self, **kw):
         def action(user, body):
-            return {'user': {'id': user.id, 'name': user.name, 'roles': sorted(user._recette_roles())}}
+            return {'user': self._profil(user)}
         return self._run('GET', action)
+
+    @http.route('/api/recette/moi/mot-de-passe', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
+    def mot_de_passe(self, **kw):
+        """L'utilisateur connecté change son mot de passe, en redonnant l'actuel pour
+        qu'un jeton volé ne suffise pas à prendre le compte.
+
+        change_password d'Odoo ne passe pas par la protection contre les essais en
+        rafale de la connexion : on l'y fait passer ici, sinon cette route
+        permettrait de deviner le mot de passe actuel sans limite.
+
+        Toutes les paires de jetons du compte sont ensuite révoquées, ce qui
+        déconnecte les autres appareils, et une nouvelle paire est renvoyée avec la
+        session, comme à la connexion.
+        """
+        headers = self._headers('POST')
+        if request.httprequest.method == 'OPTIONS':
+            return Response(status=200, headers=headers)
+        user, error = self._authenticate(headers)
+        if error:
+            return error
+        try:
+            body = self._body()
+        except ValueError:
+            return self._error(headers, 400, 'Format JSON invalide')
+        ancien = body.get('ancien_mot_de_passe') or ''
+        nouveau = (body.get('nouveau_mot_de_passe') or '').strip()
+        if not ancien or not nouveau:
+            return self._error(headers, 400, 'Mot de passe actuel et nouveau mot de passe requis')
+        if len(nouveau) < LONGUEUR_MIN_MOT_DE_PASSE:
+            return self._error(headers, 400, 'Le nouveau mot de passe doit contenir au moins %d caractères'
+                               % LONGUEUR_MIN_MOT_DE_PASSE)
+        if nouveau == ancien:
+            return self._error(headers, 400, "Le nouveau mot de passe doit être différent de l'actuel")
+
+        Users = request.env['res.users']
+        verifie = False
+        try:
+            with request.env.cr.savepoint():
+                with Users._assert_can_auth(user=user.login):
+                    # Entrer dans ce bloc veut dire qu'aucun délai d'attente n'est en
+                    # cours : un refus levé avant vient de la protection, pas du mot
+                    # de passe.
+                    verifie = True
+                    Users.change_password(ancien, nouveau)
+                Jeton = request.env['nkezefuu.recette.jeton']
+                Jeton._revoquer_tout(user)
+                paire = Jeton._emettre(user)
+        except AccessDenied:
+            if not verifie:
+                return self._error(headers, 429, 'Trop de tentatives, réessayez plus tard')
+            # 400 et non 401 : sur un 401 le site renouvellerait les jetons, comme si
+            # la session avait expiré.
+            return self._error(headers, 400, 'Mot de passe actuel incorrect')
+        except (UserError, ValidationError) as e:
+            return self._error(headers, 400, str(e.args[0]) if e.args else str(e))
+        except Exception as e:
+            _logger.exception("Erreur API recette")
+            return self._error(headers, 500, 'Une erreur est survenue: %s' % e)
+        return self._ok(headers, **self._session(user, paire))
 
     # ------------------------------------------------------------------
     # Tableaux et sections
