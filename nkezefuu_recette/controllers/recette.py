@@ -14,12 +14,11 @@ from ..models.res_users import ADMIN
 
 _logger = logging.getLogger(__name__)
 
-TOKEN_DUREE = 900
-
 
 class RecetteController(http.Controller):
-    """API de la recette fonctionnelle, appelée par le site de documentation des
-    services. Mêmes conventions que le reste de l'API mobile : jeton Bearer, réponse
+    """API de la recette fonctionnelle, appelée par le site apps-docs.nkezefuu.com.
+
+    Mêmes conventions que l'API mobile de la coopérative : jeton Bearer, réponse
     HTTP 200 avec le vrai résultat dans customstatus, et l'objet complet renvoyé
     après toute création ou modification.
 
@@ -53,18 +52,21 @@ class RecetteController(http.Controller):
     def _body(self):
         return json.loads(request.httprequest.data or b'{}')
 
+    def _jeton_bearer(self):
+        auth_header = request.httprequest.headers.get('Authorization') or ''
+        return auth_header.split('Bearer ', 1)[1].strip() if auth_header.startswith('Bearer ') else None
+
     def _authenticate(self, headers):
-        """(res.users, None) si le jeton est valide et que le compte a un profil de
-        recette ; (None, réponse d'erreur) sinon. Aucune fiche membre n'est exigée :
-        le développeur mobile n'est pas membre de la coopérative."""
-        auth_header = request.httprequest.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
+        """(res.users, None) si le jeton d'accès est valide et que le compte a un
+        profil de recette ; (None, réponse d'erreur) sinon."""
+        acces = self._jeton_bearer()
+        if not acces:
             return None, self._error(headers, 401, 'Authentification requise')
-        user_id = request.env['jwt.token'].sudo().verify_token(auth_header.split('Bearer ')[1].strip())
-        if not user_id:
+        user = request.env['nkezefuu.recette.jeton']._utilisateur_du_jeton(acces)
+        if not user:
             return None, self._error(headers, 401, 'Token invalide ou expiré')
-        request.update_env(user=user_id)
-        user = request.env['res.users'].sudo().browse(user_id)
+        request.update_env(user=user.id)
+        user = request.env['res.users'].sudo().browse(user.id)
         if not user._recette_roles():
             return None, self._error(headers, 403, "Ce compte n'a pas accès à la recette.")
         return user, None
@@ -227,11 +229,14 @@ class RecetteController(http.Controller):
     # ------------------------------------------------------------------
     # Connexion
     # ------------------------------------------------------------------
+    def _session(self, user, paire):
+        return dict(paire, user={'id': user.id, 'name': user.name, 'roles': sorted(user._recette_roles())})
+
     @http.route('/api/recette/login', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def login(self, **kw):
-        """Connexion propre à la recette : /api/auth/login exige une fiche membre et
-        un rôle mobile, que le développeur mobile n'a pas. Le renouvellement du jeton
-        passe par la route existante /api/auth/refresh, qui n'exige que l'utilisateur."""
+        """Identifiant et mot de passe contre une paire de jetons. Passe par
+        res.users.authenticate, et donc par la protection d'Odoo contre les essais de
+        mot de passe en rafale, sans ouvrir de session web."""
         headers = self._headers('POST')
         if request.httprequest.method == 'OPTIONS':
             return Response(status=200, headers=headers)
@@ -243,21 +248,46 @@ class RecetteController(http.Controller):
         if not login or not password:
             return self._error(headers, 400, 'Identifiant et mot de passe requis')
         try:
-            uid = request.session.authenticate(request.db, login, password)
+            auth_info = request.env['res.users'].authenticate(
+                {'type': 'password', 'login': login, 'password': password},
+                {'interactive': True})
         except AccessDenied:
             # Message volontairement identique que l'identifiant existe ou non : le
             # site est public, il ne doit pas permettre de deviner les comptes.
             return self._error(headers, 401, 'Identifiant ou mot de passe incorrect')
 
-        user = request.env['res.users'].sudo().browse(uid)
-        roles = user._recette_roles()
-        if not roles:
+        user = request.env['res.users'].sudo().browse(auth_info['uid'])
+        if not user._recette_roles():
             return self._error(headers, 403, "Ce compte n'a pas accès à la recette.")
-        token = request.env['jwt.token'].sudo().generate_token(uid, expires_in=TOKEN_DUREE)
-        if not token:
-            return self._error(headers, 500, 'Échec de la génération du token')
-        return self._ok(headers, token=token, expires_in=TOKEN_DUREE,
-                        user={'id': user.id, 'name': user.name, 'roles': sorted(roles)})
+        paire = request.env['nkezefuu.recette.jeton']._emettre(user)
+        return self._ok(headers, **self._session(user, paire))
+
+    @http.route('/api/recette/refresh', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
+    def refresh(self, **kw):
+        """Nouvelle paire contre le jeton de renouvellement, qui est consommé. À
+        appeler quand une route répond 401, sans redemander le mot de passe."""
+        headers = self._headers('POST')
+        if request.httprequest.method == 'OPTIONS':
+            return Response(status=200, headers=headers)
+        try:
+            body = self._body()
+        except ValueError:
+            return self._error(headers, 400, 'Format JSON invalide')
+        paire = request.env['nkezefuu.recette.jeton']._renouveler(body.get('refresh_token'))
+        if not paire:
+            return self._error(headers, 401, 'Session expirée, reconnectez-vous')
+        user = request.env['nkezefuu.recette.jeton']._utilisateur_du_jeton(paire['token'])
+        if not user._recette_roles():
+            return self._error(headers, 403, "Ce compte n'a pas accès à la recette.")
+        return self._ok(headers, **self._session(user, paire))
+
+    @http.route('/api/recette/logout', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
+    def logout(self, **kw):
+        headers = self._headers('POST')
+        if request.httprequest.method == 'OPTIONS':
+            return Response(status=200, headers=headers)
+        request.env['nkezefuu.recette.jeton']._revoquer(self._jeton_bearer())
+        return self._ok(headers)
 
     @http.route('/api/recette/moi', type='http', methods=['GET', 'OPTIONS'], auth="none", csrf=False)
     def moi(self, **kw):

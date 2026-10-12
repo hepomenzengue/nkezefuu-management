@@ -1,7 +1,12 @@
-name: Déploiement nkezefuu_recette (production)
+name: Déploiement de la plateforme management
 
-# Chaque push sur master part directement en production. Travailler sur une autre
-# branche, et ne fusionner dans master que ce qui doit être déployé.
+# Chaque push sur master part directement sur l'instance Odoo 19 dédiée
+# (management.nkezefuu.com). Travailler sur une autre branche, et ne fusionner dans
+# master que ce qui doit être déployé.
+#
+# L'instance suit l'organisation des autres Odoo du serveur : tout vit sous
+# /opt/nkezefuu/management/ (sources odoo/, venv/, clone de ce dépôt), avec sa
+# conf /etc/nkezefuu-management.conf et son service systemd nkezefuu-management.
 on:
   push:
     branches:
@@ -9,9 +14,8 @@ on:
 
 jobs:
   verifier:
-    # Garde-fou avant tout déploiement : le service redémarré est celui de toute la
-    # coopérative. Un module installé qui ne se charge pas empêche Odoo d'ouvrir la
-    # base, et la production entière tombe, pas seulement la recette.
+    # Garde-fou avant tout déploiement : un module installé qui ne se charge pas
+    # empêche Odoo d'ouvrir la base, et l'instance tombe.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -52,11 +56,11 @@ jobs:
     # Un seul déploiement à la fois : deux pushes rapprochés feraient la queue au lieu
     # d'écrire en même temps dans le même répertoire du VPS.
     concurrency:
-      group: deploy-recette-production
+      group: deploy-management
       cancel-in-progress: false
     env:
-      DEPLOY_PATH: /opt/nkezefuu/production/nkezefuu-recette
-      SERVICE: nkezefuu_production
+      DEPLOY_PATH: /opt/nkezefuu/management/nkezefuu-management
+      SERVICE: nkezefuu-management
     steps:
       - name: Setup SSH key
         run: |

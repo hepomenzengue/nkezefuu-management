@@ -13,8 +13,12 @@ class ResUsers(models.Model):
     def _recette_roles(self):
         """Profils de recette de l'utilisateur, sous forme d'ensemble de codes.
 
-        Admin testeur implique Testeur (groups.xml), et un administrateur système est
-        Admin testeur : has_group suit ces implications, il n'y a rien à recalculer.
+        Admin testeur implique Testeur (groups.xml), et has_group suit cette
+        implication : il n'y a rien à recalculer ici.
+
+        Rien n'est déduit du statut d'administrateur système : administrer le serveur
+        et participer à la recette sont deux rôles distincts. Un compte sans profil de
+        recette n'a donc aucun accès, même s'il administre Odoo.
         """
         self.ensure_one()
         roles = set()

@@ -2,8 +2,27 @@
     <data>
 
         <record id="module_category_recette" model="ir.module.category">
-            <field name="name">Recette NKEZEFUU</field>
+            <field name="name">Recette</field>
             <field name="description">Recette fonctionnelle de l'application mobile</field>
+        </record>
+
+        <!-- Odoo 19 range les groupes par privilège, et non plus directement par
+             catégorie. Deux privilèges ici, et non un seul, parce qu'un privilège
+             s'affiche comme une liste à choix unique : réunis, ils empêcheraient un
+             même compte d'être à la fois Admin testeur et Développeur mobile, ce dont
+             on a justement besoin pendant la mise au point. -->
+        <record id="res_groups_privilege_recette" model="res.groups.privilege">
+            <field name="name">Profil de recette</field>
+            <field name="placeholder">Aucun</field>
+            <field name="sequence">10</field>
+            <field name="category_id" ref="module_category_recette"/>
+        </record>
+
+        <record id="res_groups_privilege_developpement" model="res.groups.privilege">
+            <field name="name">Développement mobile</field>
+            <field name="placeholder">Aucun</field>
+            <field name="sequence">20</field>
+            <field name="category_id" ref="module_category_recette"/>
         </record>
 
         <!-- Aucun de ces groupes n'implique base.group_user : ils ne donnent par
@@ -11,24 +30,27 @@
              utilisateur portail (le développeur mobile en particulier). -->
         <record id="group_recette_testeur" model="res.groups">
             <field name="name">Testeur</field>
-            <field name="category_id" ref="module_category_recette"/>
+            <field name="sequence">10</field>
+            <field name="privilege_id" ref="res_groups_privilege_recette"/>
         </record>
 
         <record id="group_recette_admin" model="res.groups">
             <field name="name">Admin testeur</field>
+            <field name="sequence">20</field>
             <field name="implied_ids" eval="[(4, ref('group_recette_testeur'))]"/>
-            <field name="category_id" ref="module_category_recette"/>
+            <field name="privilege_id" ref="res_groups_privilege_recette"/>
         </record>
 
         <record id="group_recette_developpeur" model="res.groups">
             <field name="name">Développeur mobile</field>
-            <field name="category_id" ref="module_category_recette"/>
+            <field name="sequence">10</field>
+            <field name="privilege_id" ref="res_groups_privilege_developpement"/>
         </record>
 
-        <!-- Un administrateur système est Admin testeur sans rien avoir à cocher. -->
-        <record id="base.group_system" model="res.groups">
-            <field name="implied_ids" eval="[(4, ref('group_recette_admin'))]"/>
-        </record>
+        <!-- Volontairement, base.group_system n'implique aucun profil de recette :
+             administrer le serveur et participer à la recette sont deux rôles
+             distincts, et l'un ne suppose pas l'autre. Chaque profil est donc attribué
+             explicitement, administrateurs compris. -->
 
     </data>
 </odoo>

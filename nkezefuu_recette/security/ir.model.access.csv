@@ -7,3 +7,4 @@ access_recette_cas_testeur,Recette cas (Testeur),model_nkezefuu_recette_cas,grou
 access_recette_cas_dev,Recette cas (Développeur mobile),model_nkezefuu_recette_cas,group_recette_developpeur,1,0,0,0
 access_recette_echange_testeur,Recette échange (Testeur),model_nkezefuu_recette_echange,group_recette_testeur,1,0,0,0
 access_recette_echange_dev,Recette échange (Développeur mobile),model_nkezefuu_recette_echange,group_recette_developpeur,1,0,0,0
+access_recette_jeton_personne,Recette jeton (accès uniquement par le serveur),model_nkezefuu_recette_jeton,base.group_system,0,0,0,0

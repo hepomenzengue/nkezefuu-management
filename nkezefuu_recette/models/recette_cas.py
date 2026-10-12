@@ -110,9 +110,8 @@ class RecetteCas(models.Model):
     balle = fields.Selection(BALLES, string='À qui la balle', compute='_compute_balle', store=True)
     echange_ids = fields.One2many('nkezefuu.recette.echange', 'cas_id', string='Discussion')
 
-    _sql_constraints = [
-        ('numero_unique', 'unique(tableau_id, numero)', 'Ce numéro de cas existe déjà dans ce tableau.'),
-    ]
+    _numero_unique = models.Constraint('unique(tableau_id, numero)',
+                                       'Ce numéro de cas existe déjà dans ce tableau.')
 
     @api.depends('tableau_id.prefixe', 'numero')
     def _compute_reference(self):

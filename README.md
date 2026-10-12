@@ -1,13 +1,23 @@
-# nkezefuu_recette
+# nkezefuu-management
 
-Module Odoo 17 de recette fonctionnelle de l'application mobile NKEZEFUU.
+Modules de la plateforme de suivi des produits de la coopérative NKEZEFUU
+(`management.nkezefuu.com`), sur une instance Odoo 19 dédiée, indépendante de la
+production de la coopérative.
+
+| Module | Rôle |
+|---|---|
+| `nkezefuu_recette` | recette fonctionnelle de l'application mobile |
+
+## nkezefuu_recette
+
+Module Odoo 19 de recette fonctionnelle de l'application mobile NKEZEFUU.
 
 Les cas de test, leurs résultats et la discussion entre le testeur et le développeur
-mobile sont enregistrés dans Odoo, et manipulés uniquement par API depuis le site de
-documentation des services (entrée « Recette »). Le module n'a volontairement ni vue
+mobile sont enregistrés dans Odoo, et manipulés uniquement par API depuis le site
+`apps-docs.nkezefuu.com` (entrée « Recette »). Le module n'a volontairement ni vue
 ni menu.
 
-Il dépend du module `nkezefuu`, dont il réutilise les jetons (`jwt.token`).
+Il ne dépend que de `base`, et gère lui-même ses jetons de connexion.
 
 ## Profils
 
@@ -17,7 +27,13 @@ Il dépend du module `nkezefuu`, dont il réutilise les jetons (`jwt.token`).
 | Admin testeur | tout ce que fait le testeur, plus modifier le texte d'un cas, archiver, gérer sections et tableaux |
 | Développeur mobile | poser une suite, commenter, ajouter un cas (un compte portail suffit) |
 
-Un administrateur système est automatiquement Admin testeur.
+Chaque profil est attribué explicitement, administrateurs compris : le statut
+d'administrateur système ne donne par lui-même aucun accès à la recette.
+
+Les profils vivent dans deux privilèges distincts, « Profil de recette » (Testeur
+puis Admin testeur, qui s'excluent) et « Développement mobile ». Un même compte peut
+donc être à la fois Admin testeur et Développeur mobile, ce qui est utile pendant la
+mise au point.
 
 ## Données initiales
 
@@ -35,7 +51,9 @@ Toutes sous `/api/recette`, jeton Bearer, réponse HTTP 200 avec le vrai résult
 
 | Route | Rôle |
 |---|---|
-| `POST /login` | connexion, sans fiche membre requise |
+| `POST /login` | identifiant et mot de passe contre une paire de jetons |
+| `POST /refresh` | nouvelle paire contre le jeton de renouvellement |
+| `POST /logout` | révoque la paire du jeton d'accès |
 | `GET /moi` | l'utilisateur connecté et ses profils |
 | `GET /tableaux` | les tableaux et leurs compteurs |
 | `POST /tableaux` | créer un tableau (admin testeur) |
@@ -49,18 +67,45 @@ Toutes sous `/api/recette`, jeton Bearer, réponse HTTP 200 avec le vrai résult
 | `POST /cas/{id}/reponse` | le développeur pose une suite |
 | `POST /cas/{id}/commentaire` | message libre |
 
-Le jeton dure 15 minutes et se renouvelle par la route existante `POST /api/auth/refresh`,
-qui refuse tant qu'il n'a pas expiré : le renouveler en réponse à un 401.
+Une connexion produit un jeton d'accès valable 8 heures (`token`) et un jeton de
+renouvellement valable 30 jours (`refresh_token`). Quand une route répond 401, appeler
+`/refresh` avec le jeton de renouvellement : il est consommé et remplacé par une
+nouvelle paire, et ne peut pas être rejoué. Seules les empreintes des jetons sont
+stockées en base. Un compte archivé perd ses accès immédiatement.
 
 ## Déploiement
 
-Chaque push sur `master` est contrôlé (compilation du Python, validité des XML et du
-CSV des droits), puis déployé en production et le service `nkezefuu_production` est
-redémarré. Si le contrôle échoue, rien n'est déployé.
+L'instance suit l'organisation des autres Odoo du serveur : un répertoire par
+instance, avec ses propres sources, son venv, sa conf, sa base et son service.
+
+| Élément | Valeur |
+|---|---|
+| Domaine | `management.nkezefuu.com` |
+| Répertoire | `/opt/nkezefuu/management/` |
+| Sources Odoo 19 | `/opt/nkezefuu/management/odoo/` |
+| Venv | `/opt/nkezefuu/management/venv/` |
+| Clone de ce dépôt | `/opt/nkezefuu/management/nkezefuu-management/` |
+| Conf | `/etc/nkezefuu-management.conf` |
+| Base | `management` |
+| Port | 8075 |
+| Service systemd | `nkezefuu-management` |
+
+Un seul environnement : chaque push sur `master` est contrôlé (compilation du Python,
+validité des XML et du CSV des droits, présence des fichiers du manifeste), puis
+déployé dans le clone ci-dessus, et le service est redémarré. Si le contrôle échoue,
+rien n'est déployé.
+
+Secrets requis, les mêmes que pour `nkezefuu-addons` : `VPS_HOST`, `VPS_USER`,
+`VPS_SSH_PRIVATE_KEY`.
 
 Le pipeline ne met pas le module à jour. Après un changement de modèle, de droits ou
 de données :
 
 ```bash
-odoo-bin -c /etc/nkezefuu_production.conf -d <base> -u nkezefuu_recette --stop-after-init
+sudo systemctl stop nkezefuu-management
+sudo -u odoo /opt/nkezefuu/management/venv/bin/python3 \
+    /opt/nkezefuu/management/odoo/odoo-bin \
+    -c /etc/nkezefuu-management.conf -d management \
+    -u nkezefuu_recette --stop-after-init
+sudo systemctl start nkezefuu-management
 ```
