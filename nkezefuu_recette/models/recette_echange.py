@@ -4,17 +4,17 @@ from odoo import fields, models
 from odoo.exceptions import UserError
 
 TYPES_ECHANGE = [
-    ('resultat', 'Résultat du testeur'),
-    ('suite', 'Réponse du développeur'),
-    ('commentaire', 'Commentaire'),
-    ('modification', 'Modification du cas'),
-    ('archivage', 'Archivage'),
-    ('restauration', 'Restauration'),
+    ('result', 'Résultat du test'),
+    ('reply', 'Réponse du développeur'),
+    ('comment', 'Commentaire'),
+    ('edit', 'Modification du cas'),
+    ('archive', 'Archivage'),
+    ('restore', 'Restauration'),
 ]
 
 
 class RecetteEchange(models.Model):
-    """La discussion d'une ligne : une entrée par résultat, réponse, commentaire ou
+    """L'historique d'un cas : une entrée par résultat, réponse, commentaire ou
     modification du cas. Créée uniquement par les méthodes de nkezefuu.recette.cas,
     dans la même transaction que le changement d'état qu'elle trace : l'état affiché
     et l'historique ne peuvent pas se contredire.
@@ -28,12 +28,12 @@ class RecetteEchange(models.Model):
 
     cas_id = fields.Many2one('nkezefuu.recette.cas', string='Cas', required=True,
                              ondelete='cascade', index=True)
-    tour = fields.Integer(string='Tour')
+    tour = fields.Integer(string='Itération')
     type = fields.Selection(TYPES_ECHANGE, string='Type', required=True)
-    # Code du résultat (type resultat) ou de la suite (type suite) posé à ce moment-là
+    # Code du résultat (type result) ou du statut de correction (type reply) posé à ce moment-là
     statut = fields.Char(string='Statut posé')
     texte = fields.Text(string='Texte')
-    version_apk = fields.Char(string='Version testée')
+    version_apk = fields.Char(string="Version de l'application")
     auteur_id = fields.Many2one('res.users', string='Auteur', required=True, ondelete='restrict')
 
     def write(self, vals):

@@ -1,0 +1,1043 @@
+{
+ "code": "liste-des-prets",
+ "name": "Liste des prêts",
+ "groupe": "Prêts",
+ "sequence": 20,
+ "ligne_utilisateur": "Gestionnaire ou administrateur.",
+ "prefixe_recette": "RLP",
+ "etapes": [
+  {
+   "cle": "ouverture",
+   "titre": "Ouvrir l'écran Liste des prêts",
+   "texte": "Le gestionnaire ouvre \"Liste des prêts\". L'app appelle `GET all-loans` sans user_id, qui renvoie une ligne par emprunteur, avec `loan_limits` gardé pour la suite.",
+   "blocs": [
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "C2",
+       "field": "Accès à l'écran",
+       "rule": "Réservé aux gestionnaires et administrateurs.",
+       "apiVariable": "rôle = base.group_system OU nkezefuu.group_nkezefuu_manager",
+       "appControl": "Obligatoire : écran proposé qu'à ce rôle (le serveur renvoie 403 sinon)."
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "liste",
+   "titre": "Consulter la liste des emprunteurs",
+   "texte": "L'écran liste des prêts s'affiche, avec le bouton qui permet de demander directement un nouveau prêt. Deux actions sont possibles depuis cet écran.",
+   "blocs": [
+    {
+     "kind": "screen",
+     "title": "Écran principal",
+     "endpointIds": [
+      "loans-all-list"
+     ],
+     "fields": [
+      {
+       "label": "Nom",
+       "apiVariable": "borrowers[].name"
+      },
+      {
+       "label": "Reste à payer",
+       "apiVariable": "borrowers[].total_outstanding"
+      },
+      {
+       "label": "Progression",
+       "apiVariable": "borrowers[].repayment_percentage"
+      },
+      {
+       "label": "Montant en retard",
+       "apiVariable": "borrowers[].overdue_amount"
+      },
+      {
+       "label": "Couleur de statut",
+       "apiVariable": "borrowers[].status_color"
+      }
+     ],
+     "note": "Couleur déjà calculée côté serveur, à afficher telle quelle. Seuls les emprunteurs ayant déjà au moins un prêt apparaissent ici : un membre sans aucun prêt n'a pas de ligne, et le bouton de demande directe est le seul chemin pour lui."
+    }
+   ],
+   "etapes": [
+    {
+     "cle": "nouveau-pret",
+     "titre": "Demander un prêt pour un membre",
+     "texte": "Il demande directement un nouveau prêt : clic sur le bouton, sans avoir choisi de demandeur au préalable.",
+     "blocs": [],
+     "etapes": [
+      {
+       "cle": "choix-demandeur",
+       "titre": "Sélectionner le demandeur",
+       "texte": "Une popup de sélection du demandeur s'affiche : il saisit une recherche (`GET member-search`), choisit un membre dans la liste, puis valide. L'app retient `members[].user_id` du membre choisi.",
+       "blocs": [
+        {
+         "kind": "screen",
+         "title": "Popup de sélection du demandeur",
+         "endpointIds": [
+          "loans-member-search"
+         ],
+         "fields": [
+          {
+           "label": "Nom",
+           "apiVariable": "members[].name"
+          },
+          {
+           "label": "Identifiant",
+           "apiVariable": "members[].code"
+          },
+          {
+           "label": "Téléphone",
+           "apiVariable": "members[].phone"
+          },
+          {
+           "label": "Pastille éligibilité",
+           "apiVariable": "members[].eligibility.is_eligible"
+          }
+         ],
+         "note": "members[].user_id sert à identifier le demandeur, jamais affiché à l'écran."
+        },
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "C12",
+           "field": "Recherche",
+           "rule": "Exige au moins un caractère et ne renvoie que des correspondances par préfixe.",
+           "apiVariable": "search >= 1 caractère, 30 résultats max",
+           "appControl": "Comportement propre à l'app, pas une règle serveur dupliquée."
+          },
+          {
+           "id": "C3",
+           "field": "Demandeur",
+           "rule": "Doit être \"En règle\" et non \"Invité\", sans exception de rôle.",
+           "apiVariable": "eligibility.is_eligible du demandeur",
+           "appControl": "Obligatoire : bloquant à la validation de la popup, pas juste une alerte."
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      },
+      {
+       "cle": "formulaire",
+       "titre": "Remplir le formulaire pour le demandeur",
+       "texte": "Le formulaire s'affiche avec le demandeur verrouillé. Avant de l'afficher, l'app appelle `GET all-loans?user_id=X` pour récupérer la `capacity` et l'`eligibility` de ce demandeur : ici la liste `loans[]` renvoyée n'est pas affichée, seules les deux autres servent à borner le formulaire. Les champs sont les mêmes que dans \"Mes prêts\" (motif, montant, taux, durée, exonération), avec les mêmes règles C4, C6 à C9, plus les deux ci-dessous.",
+       "blocs": [
+        {
+         "kind": "rules",
+         "title": "Formulaire \"Demander un prêt pour un membre\" : ce qui change",
+         "rows": [
+          {
+           "id": "C10",
+           "field": "Demandeur",
+           "rule": "Obligatoire avant de simuler ou de soumettre, et verrouillé une fois choisi.",
+           "apiVariable": "user_id requis sur simulate-loan et request-loan-for-member",
+           "appControl": "Obligatoire : jamais d'appel sans demandeur choisi."
+          },
+          {
+           "id": "C5",
+           "field": "Montant",
+           "rule": "Ne peut pas dépasser la capacité du demandeur, sauf si le demandeur est le gestionnaire lui-même, où le plafond redevient bloquant.",
+           "apiVariable": "requested_loan_amount <= capacity.limit : alerte si demandeur != compte connecté, bloquant si user_id = self",
+           "appControl": "Obligatoire de distinguer les deux cas : sinon le gestionnaire croit son propre plafond contournable via cet écran."
+          }
+         ]
+        }
+       ],
+       "etapes": [
+        {
+         "cle": "avalistes",
+         "titre": "Ajouter des avalistes",
+         "texte": "Il peut ajouter des avalistes : `POST loan-guarantor-search`, avec le `user_id` du demandeur dans le corps. Étape facultative, un prêt sans avaliste est accepté.",
+         "blocs": [
+          {
+           "kind": "screen",
+           "title": "Recherche avalistes",
+           "endpointIds": [
+            "loans-guarantor-search"
+           ],
+           "fields": [
+            {
+             "label": "Nom",
+             "apiVariable": "members[].name"
+            },
+            {
+             "label": "Identifiant",
+             "apiVariable": "members[].code"
+            },
+            {
+             "label": "Téléphone",
+             "apiVariable": "members[].phone"
+            },
+            {
+             "label": "Pastille éligibilité",
+             "apiVariable": "members[].eligibility.is_eligible"
+            }
+           ],
+           "note": "members[].member_id sert à ajouter un avaliste, jamais affiché à l'écran ; à ne pas confondre avec user_id, qui identifie le demandeur."
+          },
+          {
+           "kind": "rules",
+           "rows": [
+            {
+             "id": "C11",
+             "field": "Avaliste",
+             "rule": "Le demandeur ne peut pas être son propre avaliste.",
+             "apiVariable": "guarantor_ids[] = des member_id, demandeur exclu",
+             "appControl": "L'app doit déjà l'exclure à la recherche (loan-guarantor-search) ; le vrai verrou reste une contrainte du modèle côté serveur. Sans ce filtrage, l'utilisateur pourrait sélectionner puis se faire rejeter à la validation."
+            }
+           ]
+          }
+         ],
+         "etapes": []
+        },
+        {
+         "cle": "simulation",
+         "titre": "Simuler l'échéancier",
+         "texte": "Il peut lancer `POST simulate-loan` pour prévisualiser, avec `user_id` obligatoire : rien n'est créé. Étape facultative.",
+         "blocs": [],
+         "etapes": []
+        },
+        {
+         "cle": "envoi",
+         "titre": "Envoyer la demande pour le membre",
+         "texte": "Il valide : `POST request-loan-for-member` crée le prêt pour le demandeur, pas pour le gestionnaire. En cas de succès, `GET all-loans/{id}` affiche le prêt créé. En cas d'échec, le message du serveur est affiché tel quel et rien n'est créé. Mêmes contraintes de configuration serveur que Mes prêts (assurance, journaux, locale), non répétées ici.",
+         "blocs": [],
+         "etapes": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "cle": "prets-emprunteur",
+     "titre": "Consulter les prêts d'un emprunteur",
+     "texte": "Il clique sur une ligne d'emprunteur : `GET all-loans?user_id=X` affiche la liste de tous les prêts de ce membre, avec le bouton \"Demander un prêt pour ce membre\". Même appel qu'en {{formulaire}}, mais ici la liste `loans[]` est affichée, en plus de la `capacity` et de l'`eligibility` retenues.",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Prêts du demandeur",
+       "endpointIds": [
+        "loans-all-list"
+       ],
+       "fields": [
+        {
+         "label": "Référence",
+         "apiVariable": "loans[].code"
+        },
+        {
+         "label": "Statut",
+         "apiVariable": "loans[].state"
+        },
+        {
+         "label": "Montant demandé",
+         "apiVariable": "loans[].requested_loan_amount"
+        },
+        {
+         "label": "Motif",
+         "apiVariable": "loans[].requested_loan_reason"
+        },
+        {
+         "label": "Date de la demande",
+         "apiVariable": "loans[].loan_request_date"
+        }
+       ],
+       "note": "Mêmes colonnes que l'écran liste de Mes prêts, mais pour le membre choisi."
+      }
+     ],
+     "etapes": [
+      {
+       "cle": "pret-emprunteur",
+       "titre": "Demander un prêt pour cet emprunteur",
+       "texte": "Il clique sur \"Demander un prêt pour ce membre\" : on tombe sur le formulaire de {{formulaire}}, demandeur déjà verrouillé. La popup de sélection n'est pas affichée, et l'appel `GET all-loans?user_id=X` a déjà été fait à l'étape précédente : il n'est pas rejoué.",
+       "blocs": [],
+       "etapes": []
+      },
+      {
+       "cle": "detail",
+       "titre": "Consulter le détail d'un prêt",
+       "texte": "Il clique sur une ligne de prêt : `GET all-loans/{id}` affiche le détail de ce prêt. Il reprend les mêmes lignes que le détail de Mes prêts (montant, totaux, échéancier), plus le bénéfice attendu, les avalistes et les vraies factures d'assurance, avec leur numéro.",
+       "blocs": [
+        {
+         "kind": "screen",
+         "title": "Détail d'un prêt (gestionnaire)",
+         "endpointIds": [
+          "loans-all-detail"
+         ],
+         "fields": [
+          {
+           "label": "Bénéfice attendu",
+           "apiVariable": "profit"
+          },
+          {
+           "label": "Avalistes",
+           "apiVariable": "guarantors[] : id, nom"
+          },
+          {
+           "label": "Factures d'assurance",
+           "apiVariable": "insurance_invoices[] : id, name (numéro, ex. FA/2025/00128), amount_total, invoice_date_due, payment_state"
+          }
+         ]
+        }
+       ],
+       "etapes": [
+        {
+         "cle": "pret-depuis-detail",
+         "titre": "Demander un nouveau prêt depuis le détail",
+         "texte": "Depuis ce détail, le bouton \"Nouveau prêt pour ce membre\" mène au formulaire de {{formulaire}} pour le titulaire du prêt consulté (`loan.borrower_id`), sans repasser par la popup de sélection.",
+         "blocs": [],
+         "etapes": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "tests": [
+  {
+   "groupe": "Accès et rôle",
+   "cas": [
+    {
+     "code": "LP-01",
+     "contrainte": "C1",
+     "titre": "Sans jeton",
+     "etant_donne": "Aucun en-tête Authorization",
+     "quand": "GET all-loans",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 401,
+      "message": "Authentification requise"
+     }
+    },
+    {
+     "code": "LP-02",
+     "contrainte": "C2",
+     "titre": "Membre simple sur la liste",
+     "etant_donne": "Jeton d'un membre sans rôle gestionnaire",
+     "quand": "GET all-loans",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Réservé aux gestionnaires et administrateurs"
+     }
+    },
+    {
+     "code": "LP-03",
+     "contrainte": "C2",
+     "titre": "Membre simple sur le picker",
+     "etant_donne": "Jeton d'un membre simple",
+     "quand": "GET member-search?search=a",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Réservé aux gestionnaires et administrateurs"
+     }
+    },
+    {
+     "code": "LP-04",
+     "contrainte": "C2",
+     "titre": "Membre simple sur les avalistes",
+     "etant_donne": "Jeton d'un membre simple",
+     "quand": "POST loan-guarantor-search",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Réservé aux gestionnaires et administrateurs"
+     }
+    },
+    {
+     "code": "LP-05",
+     "contrainte": "C2",
+     "titre": "Membre simple sur la demande pour un tiers",
+     "etant_donne": "Jeton d'un membre simple",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Réservé aux gestionnaires et administrateurs"
+     }
+    },
+    {
+     "code": "LP-06",
+     "contrainte": "C2",
+     "titre": "Administrateur Odoo sans groupe gestionnaire",
+     "etant_donne": "Jeton d'un admin (base.group_system)",
+     "quand": "GET all-loans",
+     "alors": "Accepté : l'un ou l'autre groupe suffit.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Écran principal (agrégation)",
+   "cas": [
+    {
+     "code": "LP-07",
+     "contrainte": false,
+     "titre": "Aucun prêt",
+     "etant_donne": "Base sans prêt",
+     "quand": "GET all-loans",
+     "alors": "borrowers = [], loan_limits présent avec avalistes_rate.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-08",
+     "contrainte": false,
+     "titre": "Une ligne par emprunteur",
+     "etant_donne": "Un membre avec 3 prêts, un autre avec 1",
+     "quand": "GET all-loans",
+     "alors": "2 lignes, loans_count 3 et 1, triées par total_outstanding décroissant.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-09",
+     "contrainte": false,
+     "titre": "Couleur retard",
+     "etant_donne": "Emprunteur avec une échéance dépassée non réglée",
+     "quand": "GET all-loans",
+     "alors": "overdue_amount > 0, status_color #DC2626, status_label retard, même si sa progression est élevée.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-10",
+     "contrainte": false,
+     "titre": "Couleur statut membre",
+     "etant_donne": "Emprunteur Invité ou Exclu, sans retard",
+     "quand": "GET all-loans",
+     "alors": "status_color #F97316, status_label statut_membre.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-11",
+     "contrainte": false,
+     "titre": "Couleur totalement remboursé",
+     "etant_donne": "Emprunteur en règle, tous prêts payés",
+     "quand": "GET all-loans",
+     "alors": "repayment_percentage 100, total_outstanding 0, status_color #23A949, status_label rembourse.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-12",
+     "contrainte": false,
+     "titre": "Couleur non démarré",
+     "etant_donne": "Emprunteur en règle, prêt validated sans aucun paiement, échéance non échue",
+     "quand": "GET all-loans",
+     "alors": "repayment_percentage 0, status_color #E9ECEF, status_label non_demarre.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-13",
+     "contrainte": false,
+     "titre": "Priorité retard sur statut",
+     "etant_donne": "Emprunteur défaillant (donc en retard)",
+     "quand": "GET all-loans",
+     "alors": "status_label retard (pas statut_membre) : le retard réel prime.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-14",
+     "contrainte": false,
+     "titre": "Prêts en brouillon",
+     "etant_donne": "Emprunteur n'ayant qu'un prêt draft",
+     "quand": "GET all-loans",
+     "alors": "Ligne présente, loans_count 1, active_loans_count 0, total_outstanding 0.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-15",
+     "contrainte": false,
+     "titre": "Filtre par état",
+     "etant_donne": "Prêts draft et validated",
+     "quand": "GET all-loans?state=validated",
+     "alors": "Seuls les emprunteurs ayant un prêt validated ; loans_count ne compte que ceux-là.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-16",
+     "contrainte": false,
+     "titre": "Gestionnaire emprunteur",
+     "etant_donne": "Le gestionnaire connecté a lui-même des prêts",
+     "quand": "GET all-loans",
+     "alors": "Il apparaît comme n'importe quel emprunteur.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-17",
+     "contrainte": false,
+     "titre": "Projet emprunteur",
+     "etant_donne": "Un prêt dont le demandeur est un projet",
+     "quand": "GET all-loans",
+     "alors": "Ligne présente, eligibility.is_eligible true, member_status false.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Picker du demandeur (C12)",
+   "cas": [
+    {
+     "code": "LP-18",
+     "contrainte": "C12",
+     "titre": "Recherche vide",
+     "etant_donne": "search absent ou vide",
+     "quand": "GET member-search",
+     "alors": "members = [] (pas d'erreur).",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-19",
+     "contrainte": "C12",
+     "titre": "Un caractère",
+     "etant_donne": "search=k",
+     "quand": "GET member-search?search=k",
+     "alors": "Tous les membres dont le nom, le code ou le téléphone commence par k/K, 30 max.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-20",
+     "contrainte": "C12",
+     "titre": "Préfixe, pas 'contient'",
+     "etant_donne": "Membre 'KENMOE Nelson'",
+     "quand": "GET member-search?search=nel",
+     "alors": "Non trouvé : 'nel' n'est pas un préfixe du nom ('KEN' l'est).",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-21",
+     "contrainte": "C12",
+     "titre": "Recherche par identifiant",
+     "etant_donne": "Membre code M0042",
+     "quand": "GET member-search?search=M00",
+     "alors": "Trouvé.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-22",
+     "contrainte": "C12",
+     "titre": "Recherche par téléphone",
+     "etant_donne": "Membre téléphone +2376...",
+     "quand": "GET member-search?search=%2B2376",
+     "alors": "Trouvé (encoder le + en %2B dans l'URL).",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-23",
+     "contrainte": "C12",
+     "titre": "Insensible à la casse",
+     "etant_donne": "Membre 'KENMOE'",
+     "quand": "GET member-search?search=ken",
+     "alors": "Trouvé.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-24",
+     "contrainte": "C12",
+     "titre": "Membre sans compte utilisateur",
+     "etant_donne": "Fiche membre sans res_users_id",
+     "quand": "GET member-search",
+     "alors": "Absent des résultats : il ne peut pas être demandeur.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-25",
+     "contrainte": "C12",
+     "titre": "Plus de 30 résultats",
+     "etant_donne": "35 membres commençant par 'A'",
+     "quand": "GET member-search?search=a",
+     "alors": "30 résultats, les premiers par ordre alphabétique.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-26",
+     "contrainte": "C3",
+     "titre": "Membre non éligible dans la liste",
+     "etant_donne": "Membre défaillant commençant par la lettre cherchée",
+     "quand": "GET member-search",
+     "alors": "Présent, eligibility.is_eligible false : l'app le grise.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Contexte du demandeur",
+   "cas": [
+    {
+     "code": "LP-27",
+     "contrainte": "C10",
+     "titre": "Membre choisi",
+     "etant_donne": "user_id d'un membre avec prêts",
+     "quand": "GET all-loans?user_id=45",
+     "alors": "loans = ses prêts, capacity et eligibility à lui (pas ceux du gestionnaire), loan_limits présent.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-28",
+     "contrainte": "C10",
+     "titre": "Membre sans prêt",
+     "etant_donne": "user_id d'un membre sans prêt",
+     "quand": "GET all-loans?user_id=45",
+     "alors": "loans = [], capacity et eligibility quand même renvoyés.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-29",
+     "contrainte": "C10",
+     "titre": "user_id inexistant",
+     "etant_donne": "user_id = 999999",
+     "quand": "GET all-loans?user_id=999999",
+     "alors": "loans = [], capacity à 0, eligibility.is_eligible true (aucune fiche) : l'app ne doit pas laisser continuer avec un id inconnu, la simulation et la demande le refuseront.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-30",
+     "contrainte": "C10",
+     "titre": "user_id non numérique",
+     "etant_donne": "user_id = abc",
+     "quand": "GET all-loans?user_id=abc",
+     "alors": "Erreur serveur.",
+     "attendu": {
+      "customstatus": 500
+     }
+    },
+    {
+     "code": "LP-31",
+     "contrainte": "C3",
+     "titre": "Demandeur non éligible",
+     "etant_donne": "user_id d'un membre défaillant",
+     "quand": "GET all-loans?user_id=",
+     "alors": "eligibility.is_eligible false, member_status_label 'Défaillant' : l'app bloque avant le formulaire.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Avalistes (C11, C12)",
+   "cas": [
+    {
+     "code": "LP-32",
+     "contrainte": "C12",
+     "titre": "user_id absent",
+     "etant_donne": "Corps JSON sans user_id",
+     "quand": "POST loan-guarantor-search?search=a",
+     "alors": "Refus, pas de liste.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Demandeur du prêt requis (user_id)"
+     }
+    },
+    {
+     "code": "LP-33",
+     "contrainte": "C12",
+     "titre": "Corps invalide",
+     "etant_donne": "Corps non JSON",
+     "quand": "POST loan-guarantor-search?search=a",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Format JSON invalide"
+     }
+    },
+    {
+     "code": "LP-34",
+     "contrainte": "C11",
+     "titre": "Demandeur exclu",
+     "etant_donne": "user_id = 45 (KENMOE), search=ken",
+     "quand": "POST loan-guarantor-search",
+     "alors": "KENMOE absent des résultats, les autres 'KEN...' présents.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-35",
+     "contrainte": "C11",
+     "titre": "Avaliste défaillant",
+     "etant_donne": "Membre défaillant commençant par la lettre cherchée",
+     "quand": "POST loan-guarantor-search",
+     "alors": "Présent : aucun filtre de statut sur les avalistes.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-36",
+     "contrainte": "C11",
+     "titre": "Demandeur dans guarantor_ids",
+     "etant_donne": "guarantor_ids contient le member_id du demandeur",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus, rien n'est créé.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le demandeur du prêt ne peut pas être son propre avaliste."
+     }
+    },
+    {
+     "code": "LP-37",
+     "contrainte": "C11",
+     "titre": "user_id passé à la place de member_id",
+     "etant_donne": "guarantor_ids = [user_id d'un membre]",
+     "quand": "POST request-loan-for-member",
+     "alors": "Si un membre porte ce member_id : accepté mais lie le mauvais avaliste. Sinon : erreur serveur (500). Toujours envoyer members[].member_id.",
+     "attendu": false
+    },
+    {
+     "code": "LP-38",
+     "contrainte": "C11",
+     "titre": "Plusieurs avalistes",
+     "etant_donne": "guarantor_ids = [12, 18]",
+     "quand": "POST request-loan-for-member",
+     "alors": "loan.guarantors contient les deux, dans l'ordre.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-39",
+     "contrainte": "C11",
+     "titre": "Sans avaliste",
+     "etant_donne": "guarantor_ids absent",
+     "quand": "POST request-loan-for-member",
+     "alors": "Accepté, loan.guarantors = [].",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Formulaire et simulation (C4 à C10)",
+   "cas": [
+    {
+     "code": "LP-40",
+     "contrainte": "C10",
+     "titre": "Simulation sans user_id",
+     "etant_donne": "Gestionnaire, corps sans user_id",
+     "quand": "POST simulate-loan",
+     "alors": "Refus : pas de repli sur le gestionnaire.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Demandeur du prêt requis (user_id)"
+     }
+    },
+    {
+     "code": "LP-41",
+     "contrainte": "C10",
+     "titre": "Simulation, user_id inexistant",
+     "etant_donne": "user_id = 999999",
+     "quand": "POST simulate-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Demandeur introuvable ou non éligible"
+     }
+    },
+    {
+     "code": "LP-42",
+     "contrainte": "C5",
+     "titre": "Simulation, tiers au-dessus de sa capacité",
+     "etant_donne": "user_id d'un membre, montant > sa capacity.limit",
+     "quand": "POST simulate-loan",
+     "alors": "Accepté : capacity renvoyée pour l'alerte, pas de blocage pour un tiers.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-43",
+     "contrainte": "C5",
+     "titre": "Simulation, gestionnaire pour lui-même",
+     "etant_donne": "user_id = compte du gestionnaire, montant > sa capacité",
+     "quand": "POST simulate-loan",
+     "alors": "Refus : pour soi-même, le plafond est bloquant.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "LP-44",
+     "contrainte": "C3",
+     "titre": "Simulation pour un membre défaillant",
+     "etant_donne": "user_id d'un membre défaillant",
+     "quand": "POST simulate-loan",
+     "alors": "Refus, message 'autrui'.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le membre <nom> ne peut pas recevoir de crédit car il est un membre \"Défaillant\"."
+     }
+    },
+    {
+     "code": "LP-45",
+     "contrainte": "C3",
+     "titre": "Simulation pour un projet",
+     "etant_donne": "user_id d'un projet",
+     "quand": "POST simulate-loan",
+     "alors": "Accepté : pas de contrainte de statut pour un projet.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-46",
+     "contrainte": "C4",
+     "titre": "Bornes du formulaire",
+     "etant_donne": "Mêmes cas que MP-15 à MP-37",
+     "quand": "POST simulate-loan / request-loan-for-member avec user_id",
+     "alors": "Mêmes refus et mêmes messages : les règles C4, C6, C7, C8, C9 sont identiques pour un gestionnaire.",
+     "attendu": {
+      "customstatus": 400
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Soumission pour un tiers",
+   "cas": [
+    {
+     "code": "LP-47",
+     "contrainte": false,
+     "titre": "Demande nominale",
+     "etant_donne": "Gestionnaire, user_id d'un membre éligible, champs validés",
+     "quand": "POST request-loan-for-member",
+     "alors": "loan.borrower_id = user_id cible (pas le gestionnaire), state validated, profit et guarantors présents.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-48",
+     "contrainte": "C10",
+     "titre": "Sans user_id",
+     "etant_donne": "Corps sans user_id",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Demandeur du prêt requis"
+     }
+    },
+    {
+     "code": "LP-49",
+     "contrainte": "C10",
+     "titre": "user_id inexistant",
+     "etant_donne": "user_id = 999999",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Demandeur introuvable ou non éligible"
+     }
+    },
+    {
+     "code": "LP-50",
+     "contrainte": "C5",
+     "titre": "Tiers au-dessus de sa capacité",
+     "etant_donne": "montant > capacity.limit du membre cible",
+     "quand": "POST request-loan-for-member",
+     "alors": "Accepté : l'app a affiché une alerte, le prêt est créé.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-51",
+     "contrainte": "C5",
+     "titre": "Gestionnaire se choisit lui-même",
+     "etant_donne": "user_id = compte du gestionnaire, montant > sa capacité",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus : impossible de contourner son propre plafond par cet écran.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Vous ne pouvez pas obtenir ce prêt car Vous ne disposez pas d'un investissement en cours suffisant dans la coopérative. Votre plafond de prêt actuel est de <plafond> FCFA \nMerci de contacter votre gestionnaire"
+     }
+    },
+    {
+     "code": "LP-52",
+     "contrainte": "C5",
+     "titre": "Gestionnaire se choisit lui-même, sous le plafond",
+     "etant_donne": "user_id = compte du gestionnaire, montant <= sa capacité",
+     "quand": "POST request-loan-for-member",
+     "alors": "Accepté : il peut emprunter pour lui-même.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-53",
+     "contrainte": "C3",
+     "titre": "Demandeur défaillant",
+     "etant_donne": "user_id d'un membre défaillant",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus, sans exception de rôle.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le membre <nom> ne peut pas recevoir de crédit car il est un membre \"Défaillant\"."
+     }
+    },
+    {
+     "code": "LP-54",
+     "contrainte": "C3",
+     "titre": "Demandeur invité",
+     "etant_donne": "user_id d'un membre guest",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le membre <nom> ne peut pas recevoir de crédit car son statut est \"Invité\"."
+     }
+    },
+    {
+     "code": "LP-55",
+     "contrainte": "C3",
+     "titre": "Demandeur projet",
+     "etant_donne": "user_id d'un projet",
+     "quand": "POST request-loan-for-member",
+     "alors": "Accepté : un projet peut emprunter.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-56",
+     "contrainte": "C14",
+     "titre": "Assurance non configurée",
+     "etant_donne": "Projet d'assurance par défaut absent",
+     "quand": "POST request-loan-for-member",
+     "alors": "Refus, rien n'est créé.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Veuillez assurer votre projet de prêt avant de procéder à la validation."
+     }
+    },
+    {
+     "code": "LP-57",
+     "contrainte": "C15",
+     "titre": "Locale absente",
+     "etant_donne": "Serveur sans fr_FR.UTF-8",
+     "quand": "POST request-loan-for-member",
+     "alors": "Erreur 500, rien n'est créé.",
+     "attendu": {
+      "customstatus": 500,
+      "message": "Une erreur est survenue: unsupported locale setting"
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Consultation et points d'entrée",
+   "cas": [
+    {
+     "code": "LP-58",
+     "contrainte": false,
+     "titre": "Détail gestionnaire",
+     "etant_donne": "Prêt de n'importe quel membre",
+     "quand": "GET all-loans/{id}",
+     "alors": "Détail complet avec profit, guarantors, insurance_invoices.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-59",
+     "contrainte": false,
+     "titre": "Prêt inexistant",
+     "etant_donne": "loan_id = 999999",
+     "quand": "GET all-loans/999999",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Prêt introuvable"
+     }
+    },
+    {
+     "code": "LP-60",
+     "contrainte": false,
+     "titre": "Entrée par une ligne d'emprunteur",
+     "etant_donne": "Clic sur borrowers[].user_id = 45",
+     "quand": "GET all-loans?user_id=45 puis formulaire",
+     "alors": "Le picker n'est pas affiché ; le demandeur est verrouillé sur ce membre ; la soumission passe par request-loan-for-member.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-61",
+     "contrainte": false,
+     "titre": "Entrée par un prêt existant",
+     "etant_donne": "Détail d'un prêt, loan.borrower_id = 45",
+     "quand": "'Nouveau prêt pour ce membre'",
+     "alors": "Même comportement que LP-60 avec user_id = 45.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-62",
+     "contrainte": false,
+     "titre": "Mauvaise route depuis une entrée directe",
+     "etant_donne": "Demandeur connu d'avance, app appelle request-loan au lieu de request-loan-for-member",
+     "quand": "POST request-loan",
+     "alors": "Le prêt est créé pour le gestionnaire, pas pour le membre : erreur d'intégration à éviter.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  }
+ ]
+}

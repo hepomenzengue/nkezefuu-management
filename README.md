@@ -6,80 +6,120 @@ production de la coopérative.
 
 | Module | Rôle |
 |---|---|
-| `nkezefuu_recette` | recette fonctionnelle de l'application mobile |
+| `nkezefuu_recette` | documentation et recette fonctionnelle de l'application mobile |
 
 ## nkezefuu_recette
 
-Module Odoo 19 de recette fonctionnelle de l'application mobile NKEZEFUU.
+Module Odoo 19 qui porte tout ce qu'affiche le site `apps-docs.nkezefuu.com` :
 
-Les cas de test, leurs résultats et la discussion entre le testeur et le développeur
-mobile sont enregistrés dans Odoo, et manipulés uniquement par API depuis le site
-`apps-docs.nkezefuu.com` (entrée « Recette »). Le module n'a volontairement ni vue
-ni menu.
+- la **documentation** : les services de l'API mobile, les parcours et leurs étapes,
+  les cas de test API ;
+- la **recette** de chaque parcours : des cas rattachés à ses étapes, testés dans
+  l'application mobile, avec leurs résultats et l'historique des échanges entre le
+  testeur et le développeur mobile.
 
-Il ne dépend que de `base`, et gère lui-même ses jetons de connexion.
+Tout est lu et manipulé uniquement par API ; le site demande une connexion pour
+chacune de ses pages. Le module n'a volontairement ni vue ni menu. Il ne dépend que
+de `base`, et gère lui-même ses jetons de connexion.
 
 ## Profils
 
 | Profil | Ce qu'il peut faire |
 |---|---|
-| Testeur | poser un résultat, commenter, ajouter un cas |
-| Admin testeur | tout ce que fait le testeur, plus modifier le texte d'un cas, archiver, gérer sections et tableaux |
-| Développeur mobile | poser une suite, commenter, ajouter un cas (un compte portail suffit) |
+| Testeur | lire tout le site, enregistrer un résultat, commenter |
+| Administrateur de recette | tout ce que fait le testeur, plus reformuler un cas, le changer d'étape, l'archiver, le restaurer, le remettre à « Non testé » |
+| Développeur mobile | lire tout le site, répondre au testeur, commenter (un compte portail suffit) |
 
 Chaque profil est attribué explicitement, administrateurs compris : le statut
-d'administrateur système ne donne par lui-même aucun accès à la recette.
+d'administrateur système ne donne par lui-même aucun accès au site. Les testeurs et
+développeurs sont créés en type **Portail**, pour qu'ils n'aient pas accès au
+back-office Odoo.
 
 Les profils vivent dans deux privilèges distincts, « Profil de recette » (Testeur
-puis Admin testeur, qui s'excluent) et « Développement mobile ». Un même compte peut
-donc être à la fois Admin testeur et Développeur mobile, ce qui est utile pendant la
-mise au point.
+puis Administrateur de recette, qui s'excluent) et « Développement mobile ». Un même
+compte peut donc être à la fois Administrateur de recette et Développeur mobile, ce
+qui est utile pendant la mise au point.
 
-## Données initiales
+## Documentation
 
-`data/recette_donnees.xml`, en `noupdate="1"` : 2 tableaux (Mes prêts, Comptes
-bancaires), 12 sections, 125 cas. Ils sont créés à l'installation et jamais réécrits
-ensuite : ce qui est corrigé depuis le site survit aux mises à jour, et un cas ajouté
-plus tard dans ce fichier est créé à la mise à jour suivante sans toucher aux autres.
+`data/documentation/` contient `services.json` (catégories et services) et un fichier
+par parcours dans `parcours/` (étapes en arbre, cas de test API, préfixe des cas de
+recette). Ces fichiers font foi : ils sont relus à **chaque mise à jour** du module
+(`data/documentation.xml`), ce qui y est corrigé est corrigé en base, ce qui en est
+retiré est supprimé. Chaque élément est retrouvé par son identifiant fixe : `code`
+pour un service, un parcours ou un cas de test API, `cle` pour une étape. Le numéro
+d'une étape (2.1.2) n'est jamais stocké, il suit sa place dans l'arbre.
+
+Dans le texte d'une étape, `{{cle}}` renvoie à l'étape de même clé du parcours.
+
+Une étape qui porte encore des cas de recette ne peut pas être retirée : la mise à
+jour s'arrête et nomme l'étape, plutôt que de perdre des résultats.
+
+Pour un nouveau processus : l'API, puis son parcours et ses étapes dans ces fichiers,
+puis ses cas de recette.
+
+## Cas de recette
+
+`data/recette_donnees.xml`, en `noupdate="1"` : 125 cas répartis sur les 4 parcours
+(références RMP, RLP, RMCB, RCB). Chacun trouve son étape par le code du parcours et
+la clé de l'étape. Ils sont créés à l'installation et jamais réécrits ensuite : ce
+que l'administrateur de recette reformule depuis le site survit aux mises à jour, et
+un cas ajouté plus tard dans ce fichier est créé à la mise à jour suivante sans
+toucher aux autres. Le site ne crée pas de cas.
 
 On archive un cas devenu inutile, on ne le supprime pas.
 
 ## Routes
 
-Toutes sous `/api/recette`, jeton Bearer, réponse HTTP 200 avec le vrai résultat dans
-`customstatus`. Toute création ou modification renvoie l'objet complet.
+Toutes sous `/api/recette`, nommées en anglais : « recette » est le seul mot français
+des chemins et des champs. Les libellés et les messages destinés aux personnes
+restent en français. Jeton Bearer, réponse HTTP 200 avec le vrai résultat dans
+`customstatus`. Toute modification renvoie l'objet complet.
 
 | Route | Rôle |
 |---|---|
-| `POST /login` | identifiant et mot de passe contre une paire de jetons |
-| `POST /refresh` | nouvelle paire contre le jeton de renouvellement |
-| `POST /logout` | révoque la paire du jeton d'accès |
-| `GET /moi` | l'utilisateur connecté (nom, identifiant) et ses profils |
-| `POST /moi/mot-de-passe` | changer son mot de passe ; révoque les autres connexions et renvoie une nouvelle paire |
-| `GET /tableaux` | les tableaux et leurs compteurs |
-| `POST /tableaux` | créer un tableau (admin testeur) |
-| `GET /tableaux/{code}` | le tableau complet ; filtres `balle=moi`, `resultat=ko,regression`, `archives=1` |
-| `POST /sections`, `POST /sections/{id}/update` | gérer les sections (admin testeur) |
-| `POST /cas` | ajouter un cas |
-| `GET /cas/{id}` | une ligne avec sa discussion |
-| `POST /cas/{id}/update` | corriger le texte (admin testeur) |
-| `POST /cas/{id}/archive`, `/unarchive` | archiver, restaurer (admin testeur) |
-| `POST /cas/{id}/resultat` | le testeur pose un résultat |
-| `POST /cas/{id}/reponse` | le développeur pose une suite |
-| `POST /cas/{id}/commentaire` | message libre |
+| `POST /auth/login` | identifiant et mot de passe contre une paire de jetons |
+| `POST /auth/refresh` | nouvelle paire contre le jeton de renouvellement |
+| `POST /auth/logout` | révoque la paire du jeton d'accès |
+| `GET /account/profile` | l'utilisateur connecté (nom, identifiant) et ses profils |
+| `POST /account/password` | changer son mot de passe ; révoque les autres connexions et renvoie une nouvelle paire |
+| `GET /docs/services` | les services, rangés par catégorie |
+| `GET /docs/journeys` | la liste des parcours |
+| `GET /docs/journeys/{code}` | un parcours : arbre des étapes numérotées, cas de test API |
+| `GET /journeys` | tableau de bord de la recette : indicateurs par parcours et synthèse |
+| `GET /journeys/{code}` | la recette d'un parcours, étapes et cas ; filtres `assigned_to_me=1`, `status=failed,regression`, `include_archived=1` |
+| `POST /steps/{id}/not-implemented` | le testeur signale une étape absente de l'application : ses cas non testés passent en « Non implémenté » ; `observed_result`, `app_version` |
+| `GET /cases/{id}` | un cas avec son historique |
+| `POST /cases/{id}/update` | reformuler (`screen`, `user_profile`, `action`, `expected_result`) ou changer d'étape (`step_id`) (administrateur de recette) |
+| `POST /cases/{id}/archive`, `/restore` | archiver, restaurer (administrateur de recette) |
+| `POST /cases/{id}/result` | le testeur enregistre un résultat : `result`, `observed_result`, `app_version` |
+| `POST /cases/{id}/reply` | le développeur répond : `fix_status`, `reply` |
+| `POST /cases/{id}/comment` | message libre : `text` |
+
+Codes des résultats : `not_tested`, `passed`, `failed`, `blocked`, `not_implemented`,
+`passed_after_fix`, `still_failing`, `regression`. « Non implémenté » (la fonction
+n'existe pas dans l'application) se distingue de « Non conforme » (elle existe mais se
+comporte mal) et de « Bloqué » (le test est empêché par autre chose) : il attend une
+action du développeur, qui peut aussi demander des précisions en cas
+d'incompréhension. Statuts de correction : `in_progress`,
+`fixed_to_retest`, `works_as_intended`, `needs_clarification`. Action attendue de
+(`awaiting`) : `tester`, `developer`, `closed`. Profils (`roles`) : `tester`,
+`acceptance_admin`, `mobile_developer`. Chaque code est renvoyé avec son libellé
+français (`{code, label}`), et chaque cas avec ses `permissions` pour le profil
+connecté.
 
 Une connexion produit un jeton d'accès valable 8 heures (`token`) et un jeton de
 renouvellement valable 30 jours (`refresh_token`). Quand une route répond 401, appeler
-`/refresh` avec le jeton de renouvellement : il est consommé et remplacé par une
+`/auth/refresh` avec le jeton de renouvellement : il est consommé et remplacé par une
 nouvelle paire, et ne peut pas être rejoué. Seules les empreintes des jetons sont
 stockées en base. Un compte archivé perd ses accès immédiatement.
 
-`/moi/mot-de-passe` attend `ancien_mot_de_passe` et `nouveau_mot_de_passe` (8 caractères
+`/account/password` attend `current_password` et `new_password` (8 caractères
 au moins, différent de l'actuel). Il passe par la même protection contre les essais en
 rafale que la connexion (`customstatus` 429 pendant le délai d'attente). Un mot de
 passe actuel faux renvoie 400, et non 401, pour que le site ne le prenne pas pour une
 session expirée. En cas de succès, toutes les paires du compte sont révoquées et la
-réponse est la session complète, comme `/login` : le site remplace ses jetons.
+réponse est la session complète, comme `/auth/login` : le site remplace ses jetons.
 
 ## Déploiement
 
@@ -99,7 +139,8 @@ instance, avec ses propres sources, son venv, sa conf, sa base et son service.
 | Service systemd | `nkezefuu-management` |
 
 Un seul environnement : chaque push sur `master` est contrôlé (compilation du Python,
-validité des XML et du CSV des droits, présence des fichiers du manifeste), puis
+validité des XML, du CSV des droits et des JSON de la documentation, présence des
+fichiers du manifeste), puis
 déployé dans le clone ci-dessus, et le service est redémarré. Si le contrôle échoue,
 rien n'est déployé.
 
@@ -107,7 +148,8 @@ Secrets requis, les mêmes que pour `nkezefuu-addons` : `VPS_HOST`, `VPS_USER`,
 `VPS_SSH_PRIVATE_KEY`.
 
 Le pipeline ne met pas le module à jour. Après un changement de modèle, de droits ou
-de données :
+de données, **documentation comprise** (un service ou une étape corrigés dans les
+JSON n'apparaissent sur le site qu'après cette commande) :
 
 ```bash
 sudo systemctl stop nkezefuu-management

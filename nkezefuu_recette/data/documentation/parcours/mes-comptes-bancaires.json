@@ -1,0 +1,522 @@
+{
+ "code": "mes-comptes-bancaires",
+ "name": "Mes comptes bancaires",
+ "groupe": "Comptes bancaires",
+ "sequence": 30,
+ "ligne_utilisateur": "Gestionnaire des comptes bancaires (nkezefuu.group_nkezefuu_bank_account_manager) : rôle distinct du Gestionnaire nkezefuu, qui n'a ici aucun accès.",
+ "prefixe_recette": "RMCB",
+ "etapes": [
+  {
+   "cle": "ouverture",
+   "titre": "Ouvrir l'écran Mes comptes bancaires",
+   "texte": "Le gestionnaire ouvre \"Mes comptes bancaires\". L'app appelle `GET member-bank-accounts`, qui renvoie uniquement les comptes dont il fait partie de manager_id, et `GET bank-transfer/pending-summary`, qui alimente un bandeau de résumé affiché en tête de ce même écran, pas sur un écran à part.",
+   "blocs": [
+    {
+     "kind": "mockup",
+     "title": "Bandeau de résumé (haut de l'écran)",
+     "html": "\n  <div style=\"display:flex;gap:.5rem;flex-wrap:wrap\">\n    <div style=\"flex:1;min-width:150px;padding:.75rem 1rem;border-radius:.5rem;background:var(--color-accent-soft);color:var(--color-accent-ink)\">\n      <div style=\"font-size:1.35rem;font-weight:600;line-height:1\">1</div>\n      <div style=\"font-size:.75rem;margin-top:.25rem\">envoi(s) en cours (touchable → \"Mes envois\")</div>\n    </div>\n    <div style=\"flex:1;min-width:150px;padding:.75rem 1rem;border-radius:.5rem;background:var(--color-warn-soft);color:var(--color-warn)\">\n      <div style=\"font-size:1.35rem;font-weight:600;line-height:1\">3</div>\n      <div style=\"font-size:.75rem;margin-top:.25rem\">réception(s) en attente (touchable → \"Mes réceptions\")</div>\n    </div>\n  </div>\n"
+    },
+    {
+     "kind": "screen",
+     "title": "Écran liste",
+     "endpointIds": [
+      "bank-accounts-member"
+     ],
+     "fields": [
+      {
+       "label": "Compte général",
+       "apiVariable": "bank_accounts[].general_account.account"
+      },
+      {
+       "label": "Description",
+       "apiVariable": "bank_accounts[].description"
+      },
+      {
+       "label": "Solde",
+       "apiVariable": "bank_accounts[].balance"
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "envois",
+   "titre": "Suivre les virements envoyés",
+   "texte": "Il touche la zone \"envois\" du bandeau : `GET bank-transfer/sent` liste ses virements en brouillon ou en attente, tous comptes gérés confondus, triés du plus récent au plus ancien.",
+   "blocs": [
+    {
+     "kind": "screen",
+     "title": "Mes envois",
+     "endpointIds": [
+      "bank-transfer-sent"
+     ],
+     "fields": [
+      {
+       "label": "Référence",
+       "apiVariable": "transfers[].name"
+      },
+      {
+       "label": "Compte émetteur",
+       "apiVariable": "transfers[].sender_account.general_account"
+      },
+      {
+       "label": "Compte destinataire",
+       "apiVariable": "transfers[].recipient_account.general_account"
+      },
+      {
+       "label": "Montant",
+       "apiVariable": "transfers[].amount"
+      },
+      {
+       "label": "Statut",
+       "apiVariable": "transfers[].state"
+      }
+     ],
+     "note": "Un virement complété ou rejeté sort de cette liste, il reste consultable dans \"Virements bancaires\" du compte concerné."
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "receptions",
+   "titre": "Suivre les virements à recevoir",
+   "texte": "Il touche la zone \"réceptions\" du bandeau : `GET bank-transfer/received` liste les virements en attente dont il est le destinataire désigné, tous comptes gérés confondus.",
+   "blocs": [
+    {
+     "kind": "screen",
+     "title": "Mes réceptions",
+     "endpointIds": [
+      "bank-transfer-received"
+     ],
+     "fields": [
+      {
+       "label": "Référence",
+       "apiVariable": "transfers[].name"
+      },
+      {
+       "label": "Compte émetteur",
+       "apiVariable": "transfers[].sender_account.general_account"
+      },
+      {
+       "label": "Émetteur désigné",
+       "apiVariable": "transfers[].sender_manager.name"
+      },
+      {
+       "label": "Montant",
+       "apiVariable": "transfers[].amount"
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "choix-compte",
+   "titre": "Sélectionner un compte",
+   "texte": "Depuis la liste, il déplie un compte : deux actions apparaissent, selon ce qu'il veut faire sur ce compte précis.",
+   "blocs": [],
+   "etapes": [
+    {
+     "cle": "mouvements",
+     "titre": "Consulter les mouvements du compte",
+     "texte": "\"Mouvements bancaires\" : `GET bank-account/{id}/transactions` affiche tous les dépôts et retraits de ce compte, brouillons et réalisés mélangés, avec le bouton \"Nouvelle transaction\".",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Mouvements bancaires",
+       "endpointIds": [
+        "bank-account-transactions-list"
+       ],
+       "fields": [
+        {
+         "label": "Type",
+         "apiVariable": "transactions[].transaction_type"
+        },
+        {
+         "label": "Bénéficiaire",
+         "apiVariable": "transactions[].beneficiary.name"
+        },
+        {
+         "label": "Montant",
+         "apiVariable": "transactions[].amount"
+        },
+        {
+         "label": "Statut",
+         "apiVariable": "transactions[].state"
+        },
+        {
+         "label": "Créé par",
+         "apiVariable": "transactions[].created_by.name"
+        }
+       ]
+      }
+     ],
+     "etapes": [
+      {
+       "cle": "nouvelle-transaction",
+       "titre": "Saisir un dépôt ou un retrait",
+       "texte": "Nouvelle transaction : il cherche le bénéficiaire (`GET bank-account/beneficiary-search`), choisit \"deposit\" ou \"withdrawal\", saisit le montant, puis \"Enregistrer\" (brouillon) ou \"Valider\" directement comme au back-office (`POST bank-account/{id}/transaction`, avec validate à true dans ce second cas).",
+       "blocs": [
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "B1",
+           "field": "Bénéficiaire",
+           "rule": "Uniquement un membre (pas un projet), revérifié côté serveur.",
+           "apiVariable": "partner_id",
+           "appControl": "Le champ ne propose que des membres, via beneficiary-search."
+          },
+          {
+           "id": "B2",
+           "field": "Retrait",
+           "rule": "Le solde réel du bénéficiaire doit couvrir le montant, vérifié seulement à la validation, pas à l'enregistrement en brouillon.",
+           "apiVariable": "beneficiary.actual_balance",
+           "appControl": "Impossible d'anticiper côté app : afficher l'erreur serveur telle quelle si validate échoue."
+          },
+          {
+           "id": "B3",
+           "field": "Dépôt",
+           "rule": "Le compte bancaire lui-même doit être assez approvisionné : un dépôt crédite le bénéficiaire DEPUIS ce compte.",
+           "apiVariable": "bank_account_id.balance",
+           "appControl": "Contre-intuitif : bien afficher le solde du compte, pas celui du bénéficiaire, dans le message d'erreur."
+          },
+          {
+           "id": "B4",
+           "field": "Date",
+           "rule": "Toujours celle du serveur, jamais saisie ni envoyée par l'app.",
+           "apiVariable": "transaction_date",
+           "appControl": "Champ non éditable."
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      },
+      {
+       "cle": "modifier-transaction",
+       "titre": "Modifier un brouillon de transaction",
+       "texte": "Modifier un brouillon dont il est le créateur : `POST bank-account/transaction/{id}/update`, avec le même bouton \"Valider\" possible dans le même appel.",
+       "blocs": [],
+       "etapes": []
+      },
+      {
+       "cle": "valider-transaction",
+       "titre": "Valider une transaction",
+       "texte": "Valider un brouillon dont il est le créateur : `POST bank-account/transaction/{id}/validate`, l'écriture comptable est posée, l'état passe à completed.",
+       "blocs": [],
+       "etapes": []
+      }
+     ]
+    },
+    {
+     "cle": "virements",
+     "titre": "Consulter les virements du compte",
+     "texte": "\"Virements bancaires\" : `GET bank-account/{id}/transfers` affiche tous les virements où ce compte est émetteur ou destinataire, avec le bouton \"Nouveau virement\" (compte émetteur déjà pré-rempli avec celui-ci).",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Virements bancaires",
+       "endpointIds": [
+        "bank-account-transfers-list"
+       ],
+       "fields": [
+        {
+         "label": "Référence",
+         "apiVariable": "transfers[].name"
+        },
+        {
+         "label": "Sens",
+         "apiVariable": "transfers[].direction"
+        },
+        {
+         "label": "Montant",
+         "apiVariable": "transfers[].amount"
+        },
+        {
+         "label": "Statut",
+         "apiVariable": "transfers[].state"
+        }
+       ],
+       "note": "Montre aussi les virements des autres gestionnaires de ce même compte, pas seulement les siens."
+      }
+     ],
+     "etapes": [
+      {
+       "cle": "nouveau-virement",
+       "titre": "Préparer un virement",
+       "texte": "Nouveau virement : il choisit le compte destinataire (`GET bank-account/recipients`), puis le gestionnaire précis à désigner comme destinataire sur ce compte (`GET bank-account/{id}/managers`), saisit le montant, puis \"Enregistrer\" ou \"Valider\" (`POST bank-transfer`).",
+       "blocs": [
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "B5",
+           "field": "Émetteur désigné",
+           "rule": "Pour un gestionnaire, toujours lui-même : impossible d'émettre au nom d'un autre gestionnaire du même compte, même en l'envoyant explicitement.",
+           "apiVariable": "sender_manager_id",
+           "appControl": "L'app n'a pas besoin de le proposer, le serveur l'impose."
+          },
+          {
+           "id": "B6",
+           "field": "Comptes",
+           "rule": "Le compte émetteur et le compte destinataire ne peuvent pas être identiques.",
+           "apiVariable": "sender_account_id / recipient_account_id",
+           "appControl": "Exclure le compte courant de la liste \"recipients\" côté app."
+          },
+          {
+           "id": "B7",
+           "field": "Montant",
+           "rule": "Doit être strictement positif.",
+           "apiVariable": "amount",
+           "appControl": "Validation de saisie simple."
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      },
+      {
+       "cle": "modifier-virement",
+       "titre": "Modifier un brouillon de virement",
+       "texte": "Modifier un brouillon dont il est l'émetteur désigné : `POST bank-transfer/{id}/update`.",
+       "blocs": [],
+       "etapes": []
+      },
+      {
+       "cle": "soumettre-virement",
+       "titre": "Soumettre un virement",
+       "texte": "Soumettre un brouillon dont il est l'émetteur désigné, séparément de la création : `POST bank-transfer/{id}/submit`. Le virement passe en attente, visible du destinataire désigné.",
+       "blocs": [],
+       "etapes": []
+      },
+      {
+       "cle": "annuler-virement",
+       "titre": "Annuler un virement en attente",
+       "texte": "Tant que le virement est en attente, il peut l'annuler s'il en est l'émetteur désigné : `POST bank-transfer/{id}/cancel`, retour en brouillon.",
+       "blocs": [],
+       "etapes": []
+      },
+      {
+       "cle": "valider-reception",
+       "titre": "Valider ou rejeter un virement reçu",
+       "texte": "S'il est le destinataire désigné d'un virement en attente (visible sur le compte destinataire, ou dans {{receptions}}), il le valide ou le rejette : `POST bank-transfer/{id}/approve` ou `/reject`.",
+       "blocs": [
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "B8",
+           "field": "Destinataire désigné",
+           "rule": "Seul lui, pas un autre gestionnaire du même compte destinataire, même s'il le gère aussi.",
+           "apiVariable": "recipient_manager_id",
+           "appControl": "Boutons Valider/Rejeter affichés seulement si can_approve/can_reject."
+          },
+          {
+           "id": "B9",
+           "rule": "Validé ou rejeté : définitif, aucun retour possible ensuite, dans les deux cas.",
+           "field": "État",
+           "apiVariable": "state",
+           "appControl": "Prévenir avant confirmation, pas d'action \"annuler\" après coup."
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "tests": [
+  {
+   "groupe": "Accès",
+   "cas": [
+    {
+     "code": "BAM-01",
+     "contrainte": false,
+     "titre": "Gestionnaire nkezefuu seul",
+     "etant_donne": "Compte avec uniquement group_nkezefuu_manager",
+     "quand": "GET member-bank-accounts",
+     "alors": "Refus : ce rôle ne donne aucun accès ici.",
+     "attendu": {
+      "customstatus": 403
+     }
+    },
+    {
+     "code": "BAM-02",
+     "contrainte": false,
+     "titre": "Admin système pur",
+     "etant_donne": "Compte admin sans le rôle Gestionnaire des comptes bancaires",
+     "quand": "GET member-bank-accounts",
+     "alors": "Refus : cet écran est réservé au gestionnaire, l'admin utilise \"Comptes bancaires\".",
+     "attendu": {
+      "customstatus": 403
+     }
+    },
+    {
+     "code": "BAM-03",
+     "contrainte": false,
+     "titre": "Gestionnaire nominal",
+     "etant_donne": "Compte avec le rôle Gestionnaire des comptes bancaires",
+     "quand": "GET member-bank-accounts",
+     "alors": "Renvoie uniquement les comptes où il figure dans manager_id.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Transactions",
+   "cas": [
+    {
+     "code": "BAM-10",
+     "contrainte": "B1",
+     "titre": "Bénéficiaire projet",
+     "etant_donne": "partner_id d'un projet",
+     "quand": "POST bank-account/{id}/transaction",
+     "alors": "Refus : seuls les membres sont acceptés comme bénéficiaires.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Bénéficiaire invalide pour un dépôt/retrait"
+     }
+    },
+    {
+     "code": "BAM-11",
+     "contrainte": "B2",
+     "titre": "Retrait, solde insuffisant, validate true",
+     "etant_donne": "Bénéficiaire avec actual_balance < amount",
+     "quand": "POST transaction avec validate: true",
+     "alors": "Transaction reste en brouillon, réponse avec error en plus de transaction à jour.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "BAM-12",
+     "contrainte": "B2",
+     "titre": "Retrait, solde insuffisant, sans validate",
+     "etant_donne": "Même cas, validate absent",
+     "quand": "POST transaction",
+     "alors": "Accepté : la contrainte de solde ne joue qu'à la validation.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "BAM-13",
+     "contrainte": "B3",
+     "titre": "Dépôt, compte bancaire sous-approvisionné",
+     "etant_donne": "bank_account.balance < amount, validate: true",
+     "quand": "POST transaction",
+     "alors": "Refus à la validation, brouillon conservé.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "BAM-14",
+     "contrainte": false,
+     "titre": "Modifier le brouillon d'un autre gestionnaire",
+     "etant_donne": "Transaction créée par un collègue gestionnaire du même compte",
+     "quand": "POST bank-account/transaction/{id}/update",
+     "alors": "Refus : seul le créateur ou l'admin peut modifier.",
+     "attendu": {
+      "customstatus": 403
+     }
+    },
+    {
+     "code": "BAM-15",
+     "contrainte": false,
+     "titre": "Annuler une transaction réalisée",
+     "etant_donne": "Gestionnaire, transaction state completed",
+     "quand": "POST bank-account/transaction/{id}/cancel",
+     "alors": "Refus : réservé strictement à l'admin.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Réservé à l'administrateur système"
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Virements",
+   "cas": [
+    {
+     "code": "BAM-20",
+     "contrainte": "B5",
+     "titre": "Émetteur imposé au créateur",
+     "etant_donne": "Gestionnaire A crée un virement en envoyant sender_manager_id = B",
+     "quand": "POST bank-transfer",
+     "alors": "sender_manager_id enregistré = A, l'envoi de B est ignoré.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "BAM-21",
+     "contrainte": "B6",
+     "titre": "Comptes identiques",
+     "etant_donne": "sender_account_id = recipient_account_id",
+     "quand": "POST bank-transfer",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le Compte bancaire emetteur et le compte bancaire destinataire ne peuvent pas être identiques."
+     }
+    },
+    {
+     "code": "BAM-22",
+     "contrainte": false,
+     "titre": "Modifier un brouillon d'un autre émetteur",
+     "etant_donne": "Gestionnaire B, virement brouillon dont sender_manager_id = A",
+     "quand": "POST bank-transfer/{id}/update",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Seul l'administrateur système ou l'émetteur désigné peut modifier ce virement"
+     }
+    },
+    {
+     "code": "BAM-23",
+     "contrainte": false,
+     "titre": "Annuler un virement complété",
+     "etant_donne": "state = completed",
+     "quand": "POST bank-transfer/{id}/cancel",
+     "alors": "Refus : seul \"en attente\" peut être annulé.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Seul un virement en attente peut être annulé"
+     }
+    },
+    {
+     "code": "BAM-24",
+     "contrainte": "B8",
+     "titre": "Approbation par un gestionnaire non désigné",
+     "etant_donne": "Compte destinataire avec deux gestionnaires C et D, recipient_manager_id = C",
+     "quand": "D appelle POST bank-transfer/{id}/approve",
+     "alors": "Refus : gérer le compte ne suffit pas, il faut être le destinataire précisément désigné.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Seul l'administrateur système ou le destinataire désigné peut valider ce virement"
+     }
+    },
+    {
+     "code": "BAM-25",
+     "contrainte": "B9",
+     "titre": "Rejeter un virement déjà rejeté",
+     "etant_donne": "state = rejected",
+     "quand": "POST bank-transfer/{id}/reject",
+     "alors": "Refus : définitif, aucun retour.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Seul un virement en attente peut être rejeté"
+     }
+    }
+   ]
+  }
+ ]
+}

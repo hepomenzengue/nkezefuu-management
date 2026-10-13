@@ -1,0 +1,326 @@
+{
+ "code": "comptes-bancaires",
+ "name": "Comptes bancaires",
+ "groupe": "Comptes bancaires",
+ "sequence": 40,
+ "ligne_utilisateur": "Administrateur système (base.group_system) uniquement : ni le rôle Gestionnaire nkezefuu, ni le Gestionnaire des comptes bancaires n'y suffisent.",
+ "prefixe_recette": "RCB",
+ "etapes": [
+  {
+   "cle": "ouverture",
+   "titre": "Ouvrir l'écran Comptes bancaires",
+   "texte": "L'administrateur ouvre \"Comptes bancaires\". `GET all-bank-accounts` renvoie tous les comptes de la coopérative avec leurs gestionnaires, et `GET bank-transfer/pending-summary` alimente un bandeau de résumé en tête de ce même écran.",
+   "blocs": [
+    {
+     "kind": "mockup",
+     "title": "Bandeau de résumé (haut de l'écran)",
+     "html": "\n  <div style=\"display:inline-flex;min-width:220px;padding:.75rem 1rem;border-radius:.5rem;background:var(--color-warn-soft);color:var(--color-warn)\">\n    <div>\n      <div style=\"font-size:1.35rem;font-weight:600;line-height:1\">7</div>\n      <div style=\"font-size:.75rem;margin-top:.25rem\">virement(s) en attente d'approbation, tous comptes</div>\n    </div>\n  </div>\n"
+    },
+    {
+     "kind": "screen",
+     "title": "Écran liste",
+     "endpointIds": [
+      "bank-accounts-all"
+     ],
+     "fields": [
+      {
+       "label": "Compte général",
+       "apiVariable": "bank_accounts[].general_account.account"
+      },
+      {
+       "label": "Description",
+       "apiVariable": "bank_accounts[].description"
+      },
+      {
+       "label": "Solde",
+       "apiVariable": "bank_accounts[].balance"
+      },
+      {
+       "label": "Gestionnaires",
+       "apiVariable": "bank_accounts[].managers[].name"
+      }
+     ]
+    },
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "A0",
+       "rule": "Le bandeau de l'admin n'affiche qu'un seul chiffre, sans zones \"envois\"/\"réceptions\" : il n'est presque jamais lui-même acteur désigné d'un virement.",
+       "field": "Bandeau",
+       "apiVariable": "pending_count",
+       "appControl": "Ne pas rendre ce chiffre touchable comme chez le gestionnaire, il n'ouvre aucune liste personnelle."
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "nouveau-compte",
+   "titre": "Créer un compte bancaire",
+   "texte": "Il touche \"Nouveau compte bancaire\" : il cherche le compte comptable (`GET bank-account/eligible-accounts`), désigne un ou plusieurs gestionnaires parmi la liste globale des éligibles (`GET bank-account/managers`), saisit la description, puis crée (`POST bank-account`).",
+   "blocs": [
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "A1",
+       "field": "Compte comptable",
+       "rule": "Doit être de classe 5, actif, et pas déjà rattaché à un autre compte bancaire.",
+       "apiVariable": "account_id",
+       "appControl": "Le champ ne propose que des comptes déjà filtrés par eligible-accounts."
+      },
+      {
+       "id": "A2",
+       "field": "Gestionnaire(s)",
+       "rule": "Obligatoire, doit porter le rôle Gestionnaire des comptes bancaires.",
+       "apiVariable": "manager_id",
+       "appControl": "Le champ ne propose que des membres déjà filtrés par bank-account/managers."
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "choix-compte",
+   "titre": "Sélectionner un compte",
+   "texte": "Depuis la liste, il déplie un compte : trois actions apparaissent, une de plus que côté gestionnaire.",
+   "blocs": [],
+   "etapes": [
+    {
+     "cle": "modifier-compte",
+     "titre": "Modifier un compte bancaire",
+     "texte": "\"Modifier\" : `POST bank-account/{id}/update`, mise à jour partielle des mêmes champs qu'à la création (seuls les champs envoyés changent).",
+     "blocs": [],
+     "etapes": []
+    },
+    {
+     "cle": "mouvements",
+     "titre": "Gérer les mouvements du compte",
+     "texte": "\"Mouvements bancaires\" : mêmes écran et appels que pour un gestionnaire (`GET bank-account/{id}/transactions`, création, modification, validation), l'admin y a toujours accès même sur un compte dont il n'est pas gestionnaire.",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Mouvements bancaires",
+       "endpointIds": [
+        "bank-account-transactions-list",
+        "bank-account-transaction-create",
+        "bank-account-transaction-update",
+        "bank-account-transaction-validate"
+       ],
+       "fields": [
+        {
+         "label": "Type",
+         "apiVariable": "transactions[].transaction_type"
+        },
+        {
+         "label": "Bénéficiaire",
+         "apiVariable": "transactions[].beneficiary.name"
+        },
+        {
+         "label": "Montant",
+         "apiVariable": "transactions[].amount"
+        },
+        {
+         "label": "Statut",
+         "apiVariable": "transactions[].state"
+        }
+       ]
+      }
+     ],
+     "etapes": [
+      {
+       "cle": "annuler-transaction",
+       "titre": "Annuler une transaction réalisée",
+       "texte": "Sur une transaction réalisée, il peut en plus l'annuler, seule action réservée strictement à l'admin, même pas ouverte au créateur : `POST bank-account/transaction/{id}/cancel`.",
+       "blocs": [
+        {
+         "kind": "screen",
+         "title": "Annuler une transaction",
+         "endpointIds": [
+          "bank-account-transaction-cancel"
+         ],
+         "fields": [
+          {
+           "label": "Statut après annulation",
+           "apiVariable": "transaction.state"
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      }
+     ]
+    },
+    {
+     "cle": "virements",
+     "titre": "Gérer les virements du compte",
+     "texte": "\"Virements bancaires\" : mêmes écran et appels que pour un gestionnaire (nouveau, modification, soumission, annulation, validation, rejet).",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Virements bancaires",
+       "endpointIds": [
+        "bank-account-transfers-list",
+        "bank-transfer-create",
+        "bank-transfer-update",
+        "bank-transfer-submit",
+        "bank-transfer-cancel",
+        "bank-transfer-approve",
+        "bank-transfer-reject"
+       ],
+       "fields": [
+        {
+         "label": "Référence",
+         "apiVariable": "transfers[].name"
+        },
+        {
+         "label": "Sens",
+         "apiVariable": "transfers[].direction"
+        },
+        {
+         "label": "Montant",
+         "apiVariable": "transfers[].amount"
+        },
+        {
+         "label": "Statut",
+         "apiVariable": "transfers[].state"
+        }
+       ]
+      },
+      {
+       "kind": "rules",
+       "rows": [
+        {
+         "id": "A3",
+         "field": "Créer/modifier en tant qu'émetteur",
+         "rule": "Contrairement au gestionnaire (verrouillé sur lui-même), l'admin doit désigner explicitement un gestionnaire qui gère réellement le compte émetteur choisi.",
+         "apiVariable": "sender_manager_id",
+         "appControl": "Champ obligatoire côté app uniquement quand l'utilisateur connecté est admin."
+        },
+        {
+         "id": "A4",
+         "field": "Soumettre / annuler / valider / rejeter",
+         "rule": "L'admin agit sur n'importe quel virement, qu'il soit ou non l'émetteur ou le destinataire désigné : seul un gestionnaire est limité à l'acteur précisément désigné.",
+         "apiVariable": "can_submit / can_cancel / can_approve / can_reject",
+         "appControl": "Ces booléens tiennent déjà compte du rôle admin, l'app n'a pas à le recalculer."
+        }
+       ]
+      }
+     ],
+     "etapes": []
+    }
+   ]
+  }
+ ],
+ "tests": [
+  {
+   "groupe": "Accès",
+   "cas": [
+    {
+     "code": "BAA-01",
+     "contrainte": false,
+     "titre": "Gestionnaire des comptes bancaires seul",
+     "etant_donne": "Compte avec ce rôle, sans base.group_system",
+     "quand": "GET all-bank-accounts",
+     "alors": "Refus : réservé strictement à l'admin.",
+     "attendu": {
+      "customstatus": 403,
+      "message": "Réservé à l'administrateur système"
+     }
+    },
+    {
+     "code": "BAA-02",
+     "contrainte": false,
+     "titre": "Admin nominal",
+     "etant_donne": "Compte base.group_system",
+     "quand": "GET all-bank-accounts",
+     "alors": "Renvoie tous les comptes, avec managers.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Comptes et transactions",
+   "cas": [
+    {
+     "code": "BAA-10",
+     "contrainte": "A1",
+     "titre": "Compte comptable déjà rattaché",
+     "etant_donne": "account_id déjà utilisé par un autre compte bancaire",
+     "quand": "POST bank-account",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Compte comptable invalide : hors classe 5, désactivé, ou déjà rattaché à un autre compte bancaire"
+     }
+    },
+    {
+     "code": "BAA-11",
+     "contrainte": "A2",
+     "titre": "Gestionnaire non éligible",
+     "etant_donne": "manager_id contient un membre sans le rôle",
+     "quand": "POST bank-account",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "BAA-12",
+     "contrainte": false,
+     "titre": "Annuler une transaction déjà annulée",
+     "etant_donne": "Transaction state != completed",
+     "quand": "POST bank-account/transaction/{id}/cancel",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Seule une transaction réalisée peut être annulée"
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Virements",
+   "cas": [
+    {
+     "code": "BAA-20",
+     "contrainte": "A3",
+     "titre": "Admin crée sans sender_manager_id",
+     "etant_donne": "Corps sans sender_manager_id",
+     "quand": "POST bank-transfer",
+     "alors": "Refus : pas de repli implicite pour l'admin comme pour un gestionnaire.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "BAA-21",
+     "contrainte": "A3",
+     "titre": "sender_manager_id ne gère pas le compte choisi",
+     "etant_donne": "Membre valide mais absent de manager_id du compte émetteur",
+     "quand": "POST bank-transfer",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "BAA-22",
+     "contrainte": "A4",
+     "titre": "Admin approuve un virement non destiné à lui",
+     "etant_donne": "Admin, recipient_manager_id = un gestionnaire",
+     "quand": "POST bank-transfer/{id}/approve",
+     "alors": "Accepté : l'admin passe outre la désignation.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  }
+ ]
+}

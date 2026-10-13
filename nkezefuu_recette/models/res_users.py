@@ -2,9 +2,9 @@
 
 from odoo import models
 
-TESTEUR = 'testeur'
-ADMIN = 'admin_testeur'
-DEVELOPPEUR = 'developpeur'
+TESTEUR = 'tester'
+ADMIN = 'acceptance_admin'
+DEVELOPPEUR = 'mobile_developer'
 
 
 class ResUsers(models.Model):
@@ -13,7 +13,7 @@ class ResUsers(models.Model):
     def _recette_roles(self):
         """Profils de recette de l'utilisateur, sous forme d'ensemble de codes.
 
-        Admin testeur implique Testeur (groups.xml), et has_group suit cette
+        Administrateur de recette implique Testeur (groups.xml), et has_group suit cette
         implication : il n'y a rien à recalculer ici.
 
         Rien n'est déduit du statut d'administrateur système : administrer le serveur

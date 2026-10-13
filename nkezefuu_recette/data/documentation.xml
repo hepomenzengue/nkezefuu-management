@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sans noupdate : rejoué à chaque mise à jour du module, pour que la base suive
+     les fichiers JSON de data/documentation (services, parcours, étapes, cas de
+     test API). Doit passer avant recette_donnees.xml, dont les cas cherchent leur
+     étape. -->
+<odoo>
+    <function model="nkezefuu.doc.chargement" name="_charger_documentation"/>
+</odoo>

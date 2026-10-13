@@ -24,15 +24,22 @@ jobs:
       - name: Compiler le Python
         run: python3 -m compileall -q nkezefuu_recette
 
-      - name: Vérifier les fichiers XML et CSV
+      - name: Vérifier les fichiers XML, CSV et JSON
         run: |
           python3 - <<'PY'
-          import csv, glob, sys
+          import csv, glob, json, sys
           import xml.dom.minidom
           erreurs = []
           for f in glob.glob('nkezefuu_recette/**/*.xml', recursive=True):
               try:
                   xml.dom.minidom.parse(f)
+              except Exception as e:
+                  erreurs.append('%s : %s' % (f, e))
+          # La documentation chargée à chaque mise à jour : un JSON invalide la bloquerait.
+          for f in glob.glob('nkezefuu_recette/data/documentation/**/*.json', recursive=True):
+              try:
+                  with open(f, encoding='utf-8') as h:
+                      json.load(h)
               except Exception as e:
                   erreurs.append('%s : %s' % (f, e))
           attendu = ['id', 'name', 'model_id/id', 'group_id/id', 'perm_read', 'perm_write', 'perm_create', 'perm_unlink']

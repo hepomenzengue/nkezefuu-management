@@ -1,0 +1,820 @@
+{
+ "code": "mes-prets",
+ "name": "Mes prêts",
+ "groupe": "Prêts",
+ "sequence": 10,
+ "ligne_utilisateur": "Simple membre (y compris un gestionnaire qui emprunte pour lui-même : il est alors traité identiquement).",
+ "prefixe_recette": "RMP",
+ "etapes": [
+  {
+   "cle": "ouverture",
+   "titre": "Ouvrir l'écran Mes prêts",
+   "texte": "Le membre ouvre \"Mes prêts\". L'app appelle `GET member-loans`, qui renvoie ses prêts avec `loan_limits`, `capacity` et `eligibility`, gardés pour la suite du parcours.",
+   "blocs": [],
+   "etapes": []
+  },
+  {
+   "cle": "liste",
+   "titre": "Consulter la liste des prêts du membre",
+   "texte": "L'écran liste de ses prêts s'affiche, avec le bouton \"Demander un prêt\" qui permet d'en demander un directement. Deux actions sont possibles depuis cet écran.",
+   "blocs": [
+    {
+     "kind": "screen",
+     "title": "Écran liste",
+     "endpointIds": [
+      "loans-member-list"
+     ],
+     "fields": [
+      {
+       "label": "Référence",
+       "apiVariable": "loans[].code"
+      },
+      {
+       "label": "Statut",
+       "apiVariable": "loans[].state"
+      },
+      {
+       "label": "Montant demandé",
+       "apiVariable": "loans[].requested_loan_amount"
+      },
+      {
+       "label": "Motif",
+       "apiVariable": "loans[].requested_loan_reason"
+      },
+      {
+       "label": "Date de la demande",
+       "apiVariable": "loans[].loan_request_date"
+      }
+     ]
+    },
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "C3",
+       "field": "Bouton \"Demander un prêt\"",
+       "rule": "Le membre doit être \"En règle\" et non \"Invité\" pour recevoir un prêt.",
+       "apiVariable": "eligibility.is_eligible (= member_status = in_order ET member_types != guest)",
+       "appControl": "Obligatoire : masquer le bouton si false."
+      }
+     ]
+    }
+   ],
+   "etapes": [
+    {
+     "cle": "formulaire",
+     "titre": "Remplir le formulaire de demande",
+     "texte": "Il clique sur \"Demander un prêt\" : le formulaire s'affiche. Aucun appel à ce stade, tout est déjà en mémoire depuis l'ouverture de l'écran. Chaque champ est contrôlé localement avant le moindre appel.",
+     "blocs": [
+      {
+       "kind": "rules",
+       "title": "Formulaire \"Demander un prêt\"",
+       "rows": [
+        {
+         "id": "C9",
+         "field": "Motif",
+         "rule": "Obligatoire, texte libre.",
+         "apiVariable": "requested_loan_reason",
+         "appControl": "Obligatoire : champ requis basique."
+        },
+        {
+         "id": "C4",
+         "field": "Montant",
+         "rule": "Ne peut pas être inférieur au minimum configuré.",
+         "apiVariable": "requested_loan_amount >= loan_limits.min_loan_amount",
+         "appControl": "Obligatoire : bloquer la saisie."
+        },
+        {
+         "id": "C5",
+         "field": "Montant",
+         "rule": "Ne peut pas dépasser la capacité d'emprunt maximum.",
+         "apiVariable": "requested_loan_amount <= capacity.limit",
+         "appControl": "Obligatoire : bloquer et afficher le détail (capacity.actions_sum, capacity.investments_sum, capacity.subsequent_balance)."
+        },
+        {
+         "id": "C6",
+         "field": "Taux d'intérêt",
+         "rule": "Ne peut pas être inférieur au minimum configuré, pré-rempli à cette valeur.",
+         "apiVariable": "interest_rate >= loan_limits.minimum_interest_rate",
+         "appControl": "Obligatoire."
+        },
+        {
+         "id": "C7",
+         "field": "Durée",
+         "rule": "Ne peut pas dépasser le maximum configuré.",
+         "apiVariable": "repayment_duration_months <= loan_limits.max_loan_repayment_duration_months",
+         "appControl": "Obligatoire."
+        },
+        {
+         "id": "C8",
+         "field": "Exonération",
+         "rule": "Aucune, ou partielle avec une période strictement inférieure à la durée totale.",
+         "apiVariable": "deferment_type = \"partial\" → 0 < deferment_period < repayment_duration_months",
+         "appControl": "Obligatoire : règle structurelle, aucun appel nécessaire."
+        }
+       ]
+      }
+     ],
+     "etapes": [
+      {
+       "cle": "simulation",
+       "titre": "Simuler l'échéancier",
+       "texte": "Il peut lancer `POST simulate-loan` pour prévisualiser l'échéancier : les mêmes contraintes sont rejouées côté serveur, rien n'est créé. Étape facultative, l'app peut aller directement à la validation.",
+       "blocs": [],
+       "etapes": []
+      },
+      {
+       "cle": "envoi",
+       "titre": "Envoyer la demande de prêt",
+       "texte": "Il valide : `POST request-loan` crée le prêt. En cas de succès, le prêt apparaît dans la liste de l'étape 2 à l'état validated. En cas d'échec, le message renvoyé par le serveur est affiché tel quel et rien n'est créé.",
+       "blocs": [
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "C14/C15",
+           "field": "Validation finale",
+           "rule": "Le serveur doit être correctement configuré (assurance, journaux comptables, locale) pour créer le prêt.",
+           "apiVariable": "aucune variable exposée côté app",
+           "appControl": "Impossible à anticiper côté app : afficher le message serveur tel quel."
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      }
+     ]
+    },
+    {
+     "cle": "detail",
+     "titre": "Consulter le détail d'un prêt",
+     "texte": "Il clique sur une ligne de prêt : `GET member-loans/{id}` affiche le détail de ce prêt, montant emprunté, ce qui est déjà payé, ce qu'il reste à payer, la progression, l'échéancier mois par mois et les échéances d'assurance.",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Détail d'un prêt",
+       "endpointIds": [
+        "loans-member-detail"
+       ],
+       "fields": [
+        {
+         "label": "Montant emprunté",
+         "apiVariable": "requested_loan_amount"
+        },
+        {
+         "label": "Total à rembourser (hors assurance)",
+         "apiVariable": "total_repayment_amount"
+        },
+        {
+         "label": "Déjà payé",
+         "apiVariable": "total_paid_amount"
+        },
+        {
+         "label": "Reste à payer (prêt + assurance)",
+         "apiVariable": "remaining_amount"
+        },
+        {
+         "label": "Progression",
+         "apiVariable": "repayment_percentage"
+        },
+        {
+         "label": "Échéancier",
+         "apiVariable": "repayment_schedule[] : date, montant, capital, intérêts, reste dû, payé"
+        },
+        {
+         "label": "Échéances d'assurance",
+         "apiVariable": "insurance_schedule[] : date, montant, payé"
+        }
+       ],
+       "note": "Aucune facture, aucun numéro côté membre : c'est un échéancier, pas une liste de factures."
+      }
+     ],
+     "etapes": []
+    }
+   ]
+  }
+ ],
+ "tests": [
+  {
+   "groupe": "Accès",
+   "cas": [
+    {
+     "code": "MP-01",
+     "contrainte": "C1",
+     "titre": "Sans jeton",
+     "etant_donne": "Aucun en-tête Authorization",
+     "quand": "GET member-loans",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 401,
+      "message": "Authentification requise"
+     }
+    },
+    {
+     "code": "MP-02",
+     "contrainte": "C1",
+     "titre": "Jeton expiré",
+     "etant_donne": "Jeton dont expires_in est dépassé",
+     "quand": "GET member-loans",
+     "alors": "Refus ; l'app doit appeler refresh puis rejouer.",
+     "attendu": {
+      "customstatus": 401,
+      "message": "Token invalide ou expiré"
+     }
+    },
+    {
+     "code": "MP-03",
+     "contrainte": "C1",
+     "titre": "Compte sans fiche membre",
+     "etant_donne": "Jeton d'un utilisateur Odoo sans nkezefuu.member",
+     "quand": "GET member-loans",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Membre introuvable"
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Ouverture de l'écran",
+   "cas": [
+    {
+     "code": "MP-04",
+     "contrainte": false,
+     "titre": "Membre sans prêt",
+     "etant_donne": "Membre en règle, aucun prêt",
+     "quand": "GET member-loans",
+     "alors": "loans = [], loan_limits / capacity / eligibility présents, bouton de demande visible.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-05",
+     "contrainte": false,
+     "titre": "Membre avec prêts",
+     "etant_donne": "Membre ayant des prêts draft et validated",
+     "quand": "GET member-loans",
+     "alors": "Tous ses prêts, du plus récent au plus ancien, avec borrower_id = son user_id.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-06",
+     "contrainte": "C3",
+     "titre": "Membre défaillant",
+     "etant_donne": "member_status = defaulting",
+     "quand": "GET member-loans",
+     "alors": "eligibility.is_eligible = false, member_status_label = 'Défaillant' ; l'app masque le bouton.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-07",
+     "contrainte": "C3",
+     "titre": "Membre invité",
+     "etant_donne": "member_types = guest, statut en règle",
+     "quand": "GET member-loans",
+     "alors": "eligibility.is_eligible = false ; l'app masque le bouton.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-08",
+     "contrainte": "C15",
+     "titre": "Configuration absente",
+     "etant_donne": "nkezefuu.min_loan_amount non configuré",
+     "quand": "GET member-loans",
+     "alors": "Erreur serveur : la liste elle-même est indisponible tant que la config n'est pas posée.",
+     "attendu": {
+      "customstatus": 500,
+      "message": "Une erreur est survenue: Le Montant minimum requis pour demander un prêt n'est pas configuré correctement."
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Consultation d'un prêt",
+   "cas": [
+    {
+     "code": "MP-09",
+     "contrainte": false,
+     "titre": "Prêt validé, non remboursé",
+     "etant_donne": "Prêt validated sans paiement",
+     "quand": "GET member-loans/{id}",
+     "alors": "total_paid_amount = 0, repayment_percentage = 0, chaque échéance paid = false, remaining_amount = total_repayment_amount + assurance restante.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-10",
+     "contrainte": false,
+     "titre": "Prêt partiellement remboursé",
+     "etant_donne": "Une échéance réglée en deux paiements partiels",
+     "quand": "GET member-loans/{id}",
+     "alors": "L'échéancier garde une entrée par mois (pas une par paiement) ; paid = true seulement si le cumul payé couvre le cumul dû.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-11",
+     "contrainte": false,
+     "titre": "Prêt totalement remboursé",
+     "etant_donne": "Prêt validated entièrement payé",
+     "quand": "GET member-loans/{id}",
+     "alors": "repayment_percentage = 100, toutes les échéances paid = true, remaining_amount = assurance restante uniquement.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-12",
+     "contrainte": false,
+     "titre": "Prêt en brouillon",
+     "etant_donne": "Prêt state = draft",
+     "quand": "GET member-loans/{id}",
+     "alors": "Totaux à 0, repayment_schedule = [].",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-13",
+     "contrainte": false,
+     "titre": "Prêt d'un autre membre",
+     "etant_donne": "loan_id appartenant à un autre membre",
+     "quand": "GET member-loans/{id}",
+     "alors": "Refus : un membre ne voit que ses prêts.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Prêt introuvable"
+     }
+    },
+    {
+     "code": "MP-14",
+     "contrainte": false,
+     "titre": "Prêt avec assurance",
+     "etant_donne": "Prêt ayant des factures d'assurance postées",
+     "quand": "GET member-loans/{id}",
+     "alors": "insurance_schedule renseigné (date, montant, paid), total_insurance_amount > 0 ; pas de insurance_invoices ni profit.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Formulaire : montant (C4, C5)",
+   "cas": [
+    {
+     "code": "MP-15",
+     "contrainte": "C4",
+     "titre": "Montant vide",
+     "etant_donne": "Formulaire sans montant",
+     "quand": "POST simulate-loan / request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Montant du prêt demandé requis"
+     }
+    },
+    {
+     "code": "MP-16",
+     "contrainte": "C4",
+     "titre": "Montant nul ou négatif",
+     "etant_donne": "requested_loan_amount = 0",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Veuillez indiquer un montant positif et non nul pour le prêt demandé."
+     }
+    },
+    {
+     "code": "MP-17",
+     "contrainte": "C4",
+     "titre": "Montant sous le minimum",
+     "etant_donne": "min_loan_amount = 10000, montant = 9999",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le montant minimum autorisé pour un prêt est de 10000.0 FCFA."
+     }
+    },
+    {
+     "code": "MP-18",
+     "contrainte": "C4",
+     "titre": "Montant égal au minimum",
+     "etant_donne": "montant = min_loan_amount",
+     "quand": "POST request-loan",
+     "alors": "Accepté.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-19",
+     "contrainte": "C5",
+     "titre": "Montant sous la capacité",
+     "etant_donne": "capacity.limit = 175000, montant = 100000",
+     "quand": "POST request-loan",
+     "alors": "Accepté.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-20",
+     "contrainte": "C5",
+     "titre": "Montant égal à la capacité",
+     "etant_donne": "montant = capacity.limit",
+     "quand": "POST request-loan",
+     "alors": "Accepté (la limite est incluse).",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-21",
+     "contrainte": "C5",
+     "titre": "Montant au-dessus de la capacité",
+     "etant_donne": "montant = capacity.limit + 1",
+     "quand": "POST simulate-loan puis request-loan",
+     "alors": "Refus sur les deux, même message ; l'app doit déjà avoir bloqué avec le détail de capacity.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Vous ne pouvez pas obtenir ce prêt car vous ne disposez pas d'un investissement en cours suffisant dans la coopérative. Votre plafond de prêt actuel est de 175000 FCFA.\nMerci de contacter votre gestionnaire."
+     }
+    },
+    {
+     "code": "MP-22",
+     "contrainte": "C5",
+     "titre": "Capacité nulle",
+     "etant_donne": "Membre sans action, sans investissement, solde prévisionnel <= 0",
+     "quand": "GET member-loans puis POST request-loan",
+     "alors": "capacity.limit = 0 ; toute demande est refusée (plafond affiché : 0 FCFA).",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "MP-23",
+     "contrainte": "C5",
+     "titre": "Gestionnaire sur Mes prêts",
+     "etant_donne": "Compte gestionnaire, montant > sa propre capacité",
+     "quand": "POST request-loan",
+     "alors": "Refus : sur cet écran, un gestionnaire est traité comme un membre simple.",
+     "attendu": {
+      "customstatus": 400
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Formulaire : taux, durée, exonération, motif (C6 à C9)",
+   "cas": [
+    {
+     "code": "MP-24",
+     "contrainte": "C6",
+     "titre": "Taux vide",
+     "etant_donne": "Sans interest_rate",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Taux d'intérêt requis"
+     }
+    },
+    {
+     "code": "MP-25",
+     "contrainte": "C6",
+     "titre": "Taux négatif",
+     "etant_donne": "interest_rate = -1",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Veuillez indiquer un taux d'intérêt positif ou null."
+     }
+    },
+    {
+     "code": "MP-26",
+     "contrainte": "C6",
+     "titre": "Taux sous le minimum",
+     "etant_donne": "minimum_interest_rate = 5, taux = 4",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le taux d'intérêt minimum est de 5.0%."
+     }
+    },
+    {
+     "code": "MP-27",
+     "contrainte": "C6",
+     "titre": "Taux égal au minimum",
+     "etant_donne": "taux = minimum_interest_rate",
+     "quand": "POST request-loan",
+     "alors": "Accepté.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-28",
+     "contrainte": "C7",
+     "titre": "Durée vide",
+     "etant_donne": "Sans repayment_duration_months",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Durée totale de remboursement requise"
+     }
+    },
+    {
+     "code": "MP-29",
+     "contrainte": "C7",
+     "titre": "Durée nulle",
+     "etant_donne": "durée = 0",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Veuillez indiquer une durée de remboursement positive et non nulle."
+     }
+    },
+    {
+     "code": "MP-30",
+     "contrainte": "C7",
+     "titre": "Durée au-dessus du maximum",
+     "etant_donne": "max = 12, durée = 13",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "La durée maximale autorisée pour un prêt est de 12 mois."
+     }
+    },
+    {
+     "code": "MP-31",
+     "contrainte": "C7",
+     "titre": "Durée égale au maximum",
+     "etant_donne": "durée = 12",
+     "quand": "POST request-loan",
+     "alors": "Accepté, 12 échéances.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-32",
+     "contrainte": "C8",
+     "titre": "Exonération Non",
+     "etant_donne": "deferment_type = none, deferment_period omis",
+     "quand": "POST request-loan",
+     "alors": "Accepté, deferment_period = 0 dans la réponse.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-33",
+     "contrainte": "C8",
+     "titre": "Partiel sans période",
+     "etant_donne": "deferment_type = partial, deferment_period = 0",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Veuillez indiquer une période d'exonération positive et non nulle."
+     }
+    },
+    {
+     "code": "MP-34",
+     "contrainte": "C8",
+     "titre": "Partiel, période égale à la durée",
+     "etant_donne": "durée = 3, deferment_period = 3",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "La période d'exonération doit etre strictement plus petite que la durée du remboursement"
+     }
+    },
+    {
+     "code": "MP-35",
+     "contrainte": "C8",
+     "titre": "Partiel valide",
+     "etant_donne": "durée = 3, deferment_period = 1",
+     "quand": "POST request-loan",
+     "alors": "Accepté ; l'échéancier reflète l'exonération.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-36",
+     "contrainte": "C9",
+     "titre": "Motif vide à la demande",
+     "etant_donne": "requested_loan_reason absent",
+     "quand": "POST request-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Motif du prêt requis"
+     }
+    },
+    {
+     "code": "MP-37",
+     "contrainte": "C9",
+     "titre": "Motif absent à la simulation",
+     "etant_donne": "Sans requested_loan_reason",
+     "quand": "POST simulate-loan",
+     "alors": "Accepté : le motif n'est pas requis pour simuler.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Simulation",
+   "cas": [
+    {
+     "code": "MP-38",
+     "contrainte": false,
+     "titre": "Simulation nominale",
+     "etant_donne": "Membre éligible, champs validés",
+     "quand": "POST simulate-loan",
+     "alors": "simulation.monthly_schedule a N entrées, total_capital = montant, capacity renvoyée ; rien n'est créé (member-loans inchangé).",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-39",
+     "contrainte": false,
+     "titre": "user_id envoyé par un membre",
+     "etant_donne": "Membre simple, user_id d'un autre membre dans le corps",
+     "quand": "POST simulate-loan",
+     "alors": "Ignoré : la simulation porte sur le membre connecté.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-40",
+     "contrainte": "C3",
+     "titre": "Simulation par un membre défaillant",
+     "etant_donne": "member_status = defaulting",
+     "quand": "POST simulate-loan",
+     "alors": "Refus, même sans montant excessif.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Vous ne pouvez pas recevoir de crédit car vous êtes un membre \"Défaillant\"."
+     }
+    },
+    {
+     "code": "MP-41",
+     "contrainte": "C3",
+     "titre": "Simulation par un invité",
+     "etant_donne": "member_types = guest",
+     "quand": "POST simulate-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Vous ne pouvez pas recevoir de crédit car votre statut est \"Invité\"."
+     }
+    },
+    {
+     "code": "MP-42",
+     "contrainte": false,
+     "titre": "Corps JSON invalide",
+     "etant_donne": "Corps non JSON",
+     "quand": "POST simulate-loan",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Format JSON invalide"
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Soumission",
+   "cas": [
+    {
+     "code": "MP-43",
+     "contrainte": false,
+     "titre": "Demande nominale",
+     "etant_donne": "Membre éligible, champs validés, config complète",
+     "quand": "POST request-loan",
+     "alors": "loan.state = validated, loan.borrower_id = user_id du membre, repayment_schedule complet, loan_request_date = aujourd'hui ; le prêt apparaît dans member-loans.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-44",
+     "contrainte": "C11",
+     "titre": "guarantor_ids envoyé",
+     "etant_donne": "Corps avec guarantor_ids",
+     "quand": "POST request-loan",
+     "alors": "Ignoré : loan sans avalistes (pas de champ guarantors dans la réponse membre).",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-45",
+     "contrainte": "C10",
+     "titre": "user_id envoyé",
+     "etant_donne": "Corps avec user_id d'un autre membre",
+     "quand": "POST request-loan",
+     "alors": "Ignoré : le prêt est créé pour le compte connecté.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-46",
+     "contrainte": "C13",
+     "titre": "Date envoyée",
+     "etant_donne": "Corps avec loan_request_date",
+     "quand": "POST request-loan",
+     "alors": "Ignorée : loan_request_date = date du jour.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "MP-47",
+     "contrainte": "C3",
+     "titre": "Demande par un membre défaillant",
+     "etant_donne": "Bouton contourné (appel direct)",
+     "quand": "POST request-loan",
+     "alors": "Refus : le serveur ne dépend pas du masquage côté app.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Vous ne pouvez pas recevoir de crédit car vous êtes un membre \"Défaillant\"."
+     }
+    },
+    {
+     "code": "MP-48",
+     "contrainte": "C14",
+     "titre": "Assurance non configurée",
+     "etant_donne": "Projet d'assurance par défaut absent",
+     "quand": "POST request-loan",
+     "alors": "Refus, rien n'est créé.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Veuillez assurer votre projet de prêt avant de procéder à la validation."
+     }
+    },
+    {
+     "code": "MP-49",
+     "contrainte": "C15",
+     "titre": "Journal non configuré",
+     "etant_donne": "Journal des prêts absent",
+     "quand": "POST request-loan",
+     "alors": "Refus, rien n'est créé.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Le Journal des prêts n'est pas configuré dans les paramètres."
+     }
+    },
+    {
+     "code": "MP-50",
+     "contrainte": "C15",
+     "titre": "Locale absente",
+     "etant_donne": "Serveur sans fr_FR.UTF-8",
+     "quand": "POST request-loan",
+     "alors": "Erreur 500, rien n'est créé (transaction annulée).",
+     "attendu": {
+      "customstatus": 500,
+      "message": "Une erreur est survenue: unsupported locale setting"
+     }
+    },
+    {
+     "code": "MP-51",
+     "contrainte": false,
+     "titre": "Double soumission",
+     "etant_donne": "Deux appels identiques rapprochés",
+     "quand": "POST request-loan x2",
+     "alors": "Deux prêts créés si les deux passent la capacité : l'app doit désactiver le bouton pendant l'appel.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  }
+ ]
+}
