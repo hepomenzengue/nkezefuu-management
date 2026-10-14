@@ -33,7 +33,6 @@ class RecetteEchange(models.Model):
     # Code du résultat (type result) ou du statut de correction (type reply) posé à ce moment-là
     statut = fields.Char(string='Statut posé')
     texte = fields.Text(string='Texte')
-    version_apk = fields.Char(string="Version de l'application")
     auteur_id = fields.Many2one('res.users', string='Auteur', required=True, ondelete='restrict')
 
     def write(self, vals):

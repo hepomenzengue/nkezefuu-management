@@ -7,8 +7,10 @@ from odoo.exceptions import AccessDenied, MissingError, UserError, ValidationErr
 from odoo.http import request
 from werkzeug.wrappers import Response
 
-from ..models.recette_cas import BALLES, RESULTATS, SUITES
+from ..models.recette_cas import BALLES, ORIGINES, RESULTATS, SUITES
 from ..models.recette_echange import TYPES_ECHANGE
+from ..models.recette_version import ETATS_VERSION, TYPES_VERSION
+from ..models.res_users import ADMIN
 from .socle import SocleApi
 
 _logger = logging.getLogger(__name__)
@@ -17,7 +19,8 @@ _logger = logging.getLogger(__name__)
 # passe n'est pas installé sur cette instance.
 LONGUEUR_MIN_MOT_DE_PASSE = 8
 
-COUNTERS = ('total', 'not_tested', 'passed', 'failed', 'regression', 'blocked', 'not_implemented', 'assigned_to_me')
+COUNTERS = ('total', 'not_tested', 'passed', 'failed', 'regression', 'blocked', 'not_implemented', 'postponed',
+            'awaiting_tester', 'awaiting_developer')
 
 # Champs d'un cas que l'administrateur de recette peut modifier : nom dans l'API,
 # nom du champ Odoo.
@@ -33,6 +36,9 @@ CHAMPS_MODIFIABLES = {
 class RecetteController(SocleApi, http.Controller):
     """Connexion au site apps-docs.nkezefuu.com, compte de l'utilisateur, et API
     de la recette.
+
+    Les lectures de la recette portent sur une version : celle passée en
+    paramètre (version=<id>), sinon celle en recette, sinon la dernière publiée.
 
     Les règles (qui peut poser quoi, l'action attendue, les itérations) sont dans
     les méthodes de nkezefuu.recette.cas : ce contrôleur authentifie, lit le
@@ -53,7 +59,7 @@ class RecetteController(SocleApi, http.Controller):
         return {'id': user.id, 'name': user.name} if user else None
 
     def _compteurs(self, cases, user):
-        balles = cases._balles_du_profil(user._recette_roles())
+        balles = cases.mapped('balle')
         resultats = cases.mapped('resultat')
         return {
             'total': len(cases),
@@ -63,12 +69,50 @@ class RecetteController(SocleApi, http.Controller):
             'regression': resultats.count('regression'),
             'blocked': resultats.count('blocked'),
             'not_implemented': resultats.count('not_implemented'),
-            # En attente d'une action de ce profil
-            'assigned_to_me': len(cases.filtered(lambda c: c.balle in balles)),
+            'postponed': resultats.count('postponed'),
+            # Action attendue du testeur, ou du développeur
+            'awaiting_tester': balles.count('tester'),
+            'awaiting_developer': balles.count('developer'),
         }
 
-    def _serialize_journey(self, parcours, user):
-        cases = request.env['nkezefuu.recette.cas'].sudo().search([('parcours_id', '=', parcours.id)])
+    def _serialize_version(self, version, user):
+        if not version:
+            return None
+        en_recette = version.etat == 'in_progress'
+        return {
+            'id': version.id,
+            'number': version.name,
+            'type': self._sel(version.type, TYPES_VERSION),
+            'state': self._sel(version.etat, ETATS_VERSION),
+            'opened_at': self._dt(version.ouverte_le),
+            'published_at': self._dt(version.publiee_le),
+            'published_by': self._user(version.publiee_par),
+            # Cas qui empêchent encore la publication (0 pour une version publiée)
+            'blocking_count': len(version._cas_bloquants()) if en_recette else 0,
+            'can_publish': en_recette and ADMIN in user._recette_roles(),
+        }
+
+    def _get_version(self, version_id=None):
+        """Version demandée par le site, sinon celle affichée par défaut. Peut être
+        vide si aucune version n'existe encore."""
+        Version = request.env['nkezefuu.recette.version'].sudo()
+        if not version_id:
+            return Version._par_defaut()
+        try:
+            version = Version.browse(int(version_id)).exists()
+        except ValueError:
+            version = Version
+        if not version:
+            raise MissingError('Version introuvable')
+        return version
+
+    @staticmethod
+    def _ref_cas(cas):
+        return {'id': cas.id, 'reference': cas.reference, 'version': cas.version_id.name}
+
+    def _serialize_journey(self, parcours, user, version):
+        cases = request.env['nkezefuu.recette.cas'].sudo().search([
+            ('parcours_id', '=', parcours.id), ('version_id', '=', version.id)])
         return {
             'code': parcours.code,
             'name': parcours.name,
@@ -80,12 +124,12 @@ class RecetteController(SocleApi, http.Controller):
     def _serialize_cas(self, cas, user, numeros, avec_echanges=False):
         """numeros : {id d'étape: numéro affiché}, calculé une fois par parcours."""
         roles = user._recette_roles()
-        dernier_ok = cas._dernier_resultat_ok()
-        regression = cas._echange_regression()
         data = {
             'id': cas.id,
             'reference': cas.reference,
             'number': cas.numero,
+            'version': {'id': cas.version_id.id, 'number': cas.version_id.name,
+                        'state': self._sel(cas.version_id.etat, ETATS_VERSION)},
             'journey': {'code': cas.parcours_id.code, 'name': cas.parcours_id.name},
             'step': {'id': cas.etape_id.id, 'key': cas.etape_id.cle,
                      'number': numeros.get(cas.etape_id.id), 'title': cas.etape_id.titre},
@@ -94,19 +138,22 @@ class RecetteController(SocleApi, http.Controller):
             'action': cas.action,
             'expected_result': cas.attendu,
             'active': cas.active,
+            # Cas d'une version publiée dont celui-ci est la régression ou la reprise
+            'origin': dict(self._ref_cas(cas.origine_id), kind=self._sel(cas.origine_type, ORIGINES))
+                      if cas.origine_id else None,
+            # Régressions et reprises créées depuis ce cas dans les versions suivantes
+            'followups': [dict(self._ref_cas(r), kind=self._sel(r.origine_type, ORIGINES))
+                          for r in cas.reprise_ids],
             'result': self._sel(cas.resultat, RESULTATS),
             'observed_result': cas.constat or '',
             'tested_by': self._user(cas.teste_par),
             'tested_at': self._dt(cas.teste_le),
-            'app_version': cas.version_apk or '',
             'fix_status': self._sel(cas.suite, SUITES),
             'reply': cas.reponse or '',
             'replied_by': self._user(cas.repondu_par),
             'replied_at': self._dt(cas.repondu_le),
             'iteration': cas.tour,
             'awaiting': self._sel(cas.balle, BALLES),
-            'last_passed_version': dernier_ok.version_apk or None,
-            'regression_version': regression.version_apk or None,
             'permissions': cas._droits(roles),
         }
         if avec_echanges:
@@ -121,7 +168,6 @@ class RecetteController(SocleApi, http.Controller):
             'type': self._sel(echange.type, TYPES_ECHANGE),
             'status': self._sel(echange.statut, selection) if echange.statut else None,
             'text': echange.texte or '',
-            'app_version': echange.version_apk or '',
             'author': self._user(echange.auteur_id),
             'date': self._dt(echange.create_date),
         }
@@ -286,31 +332,67 @@ class RecetteController(SocleApi, http.Controller):
     # ------------------------------------------------------------------
     # Recette des parcours
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Versions
+    # ------------------------------------------------------------------
+    @http.route('/api/recette/versions', type='http', methods=['GET', 'OPTIONS'], auth="none", csrf=False)
+    def versions(self, **kw):
+        """Toutes les versions, de la plus récente à la plus ancienne, et l'id de
+        celle que le site affiche par défaut."""
+        def action(user, body):
+            Version = request.env['nkezefuu.recette.version'].sudo()
+            return {'versions': [self._serialize_version(v, user) for v in Version.search([])],
+                    'default_version_id': Version._par_defaut().id or None}
+        return self._run('GET', action)
+
+    @http.route('/api/recette/versions/<int:version_id>/publish', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
+    def version_publish(self, version_id, **kw):
+        """L'administrateur de recette publie la version en recette. Refusé tant
+        qu'un cas n'est ni conforme ni reporté. Renvoie la version."""
+        def action(user, body):
+            version = self._get_version(version_id).publier(user)
+            return {'version': self._serialize_version(version, user)}
+        return self._run('POST', action, ecriture=True)
+
+    # ------------------------------------------------------------------
+    # Recette des parcours
+    # ------------------------------------------------------------------
     @http.route('/api/recette/journeys', type='http', methods=['GET', 'OPTIONS'], auth="none", csrf=False)
     def acceptance_journeys(self, **kw):
-        """Tableau de bord : les indicateurs de chaque parcours, et leur synthèse."""
+        """Tableau de bord d'une version : les indicateurs de chaque parcours qui a
+        des cas dans cette version, et leur synthèse."""
         def action(user, body):
-            tous = request.env['nkezefuu.doc.parcours'].sudo().search([])
-            data = [self._serialize_journey(p, user) for p in tous]
+            version = self._get_version(request.httprequest.args.get('version'))
+            data = []
+            if version:
+                tous = request.env['nkezefuu.doc.parcours'].sudo().search([])
+                data = [j for j in (self._serialize_journey(p, user, version) for p in tous)
+                        if j['counters']['total']]
             summary = {k: sum(p['counters'][k] for p in data) for k in COUNTERS}
-            return {'journeys': data, 'summary': summary}
+            return {'version': self._serialize_version(version, user), 'journeys': data, 'summary': summary}
         return self._run('GET', action)
 
     @http.route('/api/recette/journeys/<string:code>', type='http', methods=['GET', 'OPTIONS'], auth="none", csrf=False)
     def acceptance_journey(self, code, **kw):
-        """La recette d'un parcours : toutes ses étapes dans l'ordre de lecture,
-        chacune avec ses cas. Une étape sans cas est renvoyée quand même : le site
-        s'en sert pour la liste des étapes à la modification d'un cas.
+        """La recette d'un parcours dans une version : toutes ses étapes dans
+        l'ordre de lecture, chacune avec ses cas de cette version. Une étape sans
+        cas est renvoyée quand même : le site s'en sert pour la liste des étapes à
+        la modification d'un cas.
 
-        Filtres cumulables : assigned_to_me=1 (en attente d'une action de ce
-        profil), status=failed,regression (codes de résultat séparés par des
-        virgules), include_archived=1 pour inclure les cas archivés."""
+        Filtres cumulables : version=<id> (sinon la version par défaut),
+        awaiting=tester ou developer (action attendue de ce rôle, codes séparés par
+        des virgules),
+        status=failed,regression (codes de résultat séparés par des virgules),
+        include_archived=1 pour inclure les cas archivés."""
         def action(user, body):
             parcours = self._get_journey(code)
             args = request.httprequest.args
-            domain = [('parcours_id', '=', parcours.id)]
-            if args.get('assigned_to_me') == '1':
-                domain.append(('balle', 'in', request.env['nkezefuu.recette.cas']._balles_du_profil(user._recette_roles())))
+            version = self._get_version(args.get('version'))
+            if not version:
+                raise MissingError('Aucune version en recette')
+            domain = [('parcours_id', '=', parcours.id), ('version_id', '=', version.id)]
+            if args.get('awaiting'):
+                domain.append(('balle', 'in', [b.strip() for b in args['awaiting'].split(',') if b.strip()]))
             if args.get('status'):
                 domain.append(('resultat', 'in', [r.strip() for r in args['status'].split(',') if r.strip()]))
             Cas = request.env['nkezefuu.recette.cas'].sudo()
@@ -320,24 +402,28 @@ class RecetteController(SocleApi, http.Controller):
 
             numeros = self._numeros(parcours)
             steps = [self._serialize_step(etape, cases, user, numeros) for etape, _numero in parcours._etapes_dans_l_ordre()]
-            return {'journey': self._serialize_journey(parcours, user), 'steps': steps}
+            return {'version': self._serialize_version(version, user),
+                    'journey': self._serialize_journey(parcours, user, version), 'steps': steps}
         return self._run('GET', action)
 
     @http.route('/api/recette/steps/<int:step_id>/not-implemented', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def step_not_implemented(self, step_id, **kw):
         """Signale qu'une étape entière manque dans l'application : ses cas non
-        testés passent en « Non implémenté ». Corps : observed_result, app_version.
-        Renvoie l'étape avec tous ses cas, et les indicateurs du parcours."""
+        testés de la version en recette passent en « Non implémenté ». Corps :
+        observed_result. Renvoie l'étape avec ses cas de cette version, et les
+        indicateurs du parcours."""
         def action(user, body):
             etape = request.env['nkezefuu.doc.etape'].sudo().browse(step_id).exists()
             if not etape:
                 raise MissingError('Étape introuvable')
             Cas = request.env['nkezefuu.recette.cas']
-            Cas.signaler_etape_non_implementee(user, etape, body.get('observed_result'), body.get('app_version'))
+            cases = Cas.signaler_etape_non_implementee(user, etape, body.get('observed_result'))
+            version = cases.version_id
             Cas.invalidate_model()
-            cases = Cas.sudo().search([('etape_id', '=', etape.id)])
+            cases = Cas.sudo().search([('etape_id', '=', etape.id), ('version_id', '=', version.id)])
             parcours = etape.parcours_id
-            return {'journey': self._serialize_journey(parcours, user),
+            return {'version': self._serialize_version(version, user),
+                    'journey': self._serialize_journey(parcours, user, version),
                     'step': self._serialize_step(etape, cases, user, self._numeros(parcours))}
         return self._run('POST', action, ecriture=True)
 
@@ -373,8 +459,17 @@ class RecetteController(SocleApi, http.Controller):
     @http.route('/api/recette/cases/<int:cas_id>/result', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def case_result(self, cas_id, **kw):
         def action(user, body):
-            cas = self._get_cas(cas_id).poser_resultat(
-                user, body.get('result'), body.get('observed_result'), body.get('app_version'))
+            cas = self._get_cas(cas_id).poser_resultat(user, body.get('result'), body.get('observed_result'))
+            return self._cas_complet(cas, user)
+        return self._run('POST', action, ecriture=True)
+
+    @http.route('/api/recette/cases/<int:cas_id>/regression', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
+    def case_regression(self, cas_id, **kw):
+        """Signale la régression d'un cas conforme d'une version publiée. Corps :
+        observed_result. Renvoie le nouveau cas, créé dans la version en recette
+        (ouverte en Correctif s'il n'y en avait pas)."""
+        def action(user, body):
+            cas = self._get_cas(cas_id).signaler_regression(user, body.get('observed_result'))
             return self._cas_complet(cas, user)
         return self._run('POST', action, ecriture=True)
 

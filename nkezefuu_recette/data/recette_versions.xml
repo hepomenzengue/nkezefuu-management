@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Version de l'application en recette. Sans noupdate : rejoué à chaque mise à
+     jour du module, sans effet si la version existe déjà.
+
+     Pour une nouvelle version, remplacer le numéro par celui de la version
+     suivante, en fonction de son type, à partir de la dernière version publiée :
+       Correctif  0.0.1 > 0.0.2   correction ou petite mise à jour
+       Évolution  0.0.1 > 0.1.0   nouvelle fonctionnalité ou nouveau parcours
+       Majeure    0.0.1 > 1.0.0   refonte importante
+     Un numéro qui ne suit pas la dernière version publiée arrête la mise à jour.
+
+     Doit passer avant recette_donnees.xml : un cas ajouté rejoint la version en
+     recette au moment où il est créé. -->
+<odoo>
+    <function model="nkezefuu.recette.version" name="_declarer">
+        <value>0.0.1</value>
+    </function>
+</odoo>

@@ -9,6 +9,8 @@ access_doc_etape_testeur,Étape de parcours (Testeur),model_nkezefuu_doc_etape,g
 access_doc_etape_dev,Étape de parcours (Développeur mobile),model_nkezefuu_doc_etape,group_recette_developpeur,1,0,0,0
 access_doc_test_testeur,Cas de test API (Testeur),model_nkezefuu_doc_test,group_recette_testeur,1,0,0,0
 access_doc_test_dev,Cas de test API (Développeur mobile),model_nkezefuu_doc_test,group_recette_developpeur,1,0,0,0
+access_recette_version_testeur,Recette version (Testeur),model_nkezefuu_recette_version,group_recette_testeur,1,0,0,0
+access_recette_version_dev,Recette version (Développeur mobile),model_nkezefuu_recette_version,group_recette_developpeur,1,0,0,0
 access_recette_cas_testeur,Recette cas (Testeur),model_nkezefuu_recette_cas,group_recette_testeur,1,0,0,0
 access_recette_cas_dev,Recette cas (Développeur mobile),model_nkezefuu_recette_cas,group_recette_developpeur,1,0,0,0
 access_recette_echange_testeur,Recette échange (Testeur),model_nkezefuu_recette_echange,group_recette_testeur,1,0,0,0

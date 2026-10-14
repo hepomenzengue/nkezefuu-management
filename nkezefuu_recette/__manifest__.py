@@ -1,6 +1,6 @@
 {
     'name': 'NKEZEFUU RECETTE',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     # Négatif pour passer devant les modules standard, dont la séquence vaut 100 :
     # même convention que nkezefuu (-100) et nkezefuu_fuu (-99) côté coopérative.
     'sequence': -100,
@@ -10,9 +10,14 @@ Documentation et recette fonctionnelle de l'application mobile NKEZEFUU.
 
 La documentation (services de l'API mobile, parcours et leurs étapes, cas de
 test API) est chargée depuis les fichiers JSON de data/documentation à chaque
-mise à jour du module. Chaque parcours a sa recette : des cas rattachés à ses
-étapes, avec leurs résultats et l'historique des échanges entre le testeur et le
-développeur mobile.
+mise à jour du module.
+
+La recette est organisée par version de l'application : chaque version ne
+contient que les cas de ses nouveautés, rattachés aux étapes des parcours, avec
+leurs résultats et l'historique des échanges entre le testeur et le développeur
+mobile. Une version publiée est figée. Les cas reportés sont repris dans la
+version suivante, et une régression se signale depuis le cas conforme d'une
+version publiée.
 
 Tout est lu et manipulé uniquement par API depuis le site apps-docs.nkezefuu.com,
 qui demande une connexion pour chacune de ses pages. Le module n'a volontairement
@@ -35,6 +40,7 @@ lui-même aucun accès au site.
         'security/groups.xml',
         'security/ir.model.access.csv',
         'data/documentation.xml',
+        'data/recette_versions.xml',
         'data/recette_donnees.xml',
     ],
     'installable': True,

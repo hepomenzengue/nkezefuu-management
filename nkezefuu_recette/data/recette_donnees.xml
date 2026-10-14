@@ -3,7 +3,12 @@
      noupdate="1" : créés à l'installation, jamais réécrits ensuite. Les
      reformulations de l'administrateur de recette survivent donc aux mises à
      jour du module, et un cas ajouté plus tard dans ce fichier sera créé sans
-     toucher aux autres. Le numéro d'un nouveau cas est le suivant du parcours. -->
+     toucher aux autres.
+
+     Un cas rejoint la version en recette au moment où il est créé
+     (data/recette_versions.xml) : les cas ci-dessous forment la version 0.0.1. Un
+     nouveau cas s'écrit sans numéro : il prend le suivant du parcours, après ceux
+     que le serveur a pu créer entre-temps (régressions, reprises de reports). -->
 <odoo noupdate="1">
 
     <!-- ====================================================================== -->

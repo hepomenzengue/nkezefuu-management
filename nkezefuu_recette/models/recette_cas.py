@@ -16,7 +16,17 @@ RESULTATS = [
     ('not_implemented', 'Non implémenté'),
     ('passed_after_fix', 'Conforme après correction'),
     ('still_failing', 'Toujours non conforme'),
+    # Posé seulement par le signalement d'une régression, sur le cas créé dans la
+    # version en recette (signaler_regression) : jamais choisi dans la liste.
     ('regression', 'Régression'),
+    # Décision de l'administrateur de recette : la version peut sortir sans ce cas,
+    # qui est repris automatiquement dans la version suivante.
+    ('postponed', 'Reporté'),
+]
+
+ORIGINES = [
+    ('regression', 'Régression'),
+    ('postponed', 'Report'),
 ]
 
 SUITES = [
@@ -39,19 +49,22 @@ RESULTATS_EN_ECHEC = ('failed', 'still_failing', 'regression', 'not_implemented'
 # Après une réponse, il confirme ou conteste ; sans réponse, il constate.
 # Non implémenté reste possible après une réponse : la fonction peut être toujours
 # absente de la version livrée.
-RESULTATS_SANS_REPONSE = ('passed', 'failed', 'blocked', 'regression', 'not_implemented')
+RESULTATS_SANS_REPONSE = ('passed', 'failed', 'blocked', 'not_implemented')
 RESULTATS_APRES_REPONSE = ('passed', 'passed_after_fix', 'still_failing', 'blocked', 'not_implemented')
 
 # Le résultat observé est exigé dès que quelque chose ne va pas : un cas en échec
-# sans explication ne sert à rien au développeur.
-RESULTATS_AVEC_CONSTAT = ('failed', 'still_failing', 'regression', 'blocked', 'not_implemented')
+# sans explication ne sert à rien au développeur. Pour un report, le même champ
+# porte le motif.
+RESULTATS_AVEC_CONSTAT = ('failed', 'still_failing', 'regression', 'blocked', 'not_implemented', 'postponed')
 
 # Le développeur ne peut répondre que si le testeur attend son action, ou pour
 # compléter sa propre réponse tant que le testeur n'a pas repris la main.
 RESULTATS_A_TRAITER = ('failed', 'still_failing', 'regression', 'blocked', 'not_implemented')
 
-# Une réponse sans explication n'est acceptée que pour « En cours d'analyse ».
-SUITES_SANS_TEXTE = ('in_progress',)
+# Une réponse sans explication est acceptée pour « En cours d'analyse » et « Corrigé, à
+# retester » : le testeur rejoue le même cas, le statut suffit. « Fonctionnement normal »
+# doit dire pourquoi, et « Précisions demandées » ce qui manque.
+SUITES_SANS_TEXTE = ('in_progress', 'fixed_to_retest')
 
 CHAMPS_TEXTE = ('ecran', 'profil', 'action', 'attendu')
 LIBELLES_TEXTE = {
@@ -63,11 +76,17 @@ LIBELLES_TEXTE = {
 
 
 class RecetteCas(models.Model):
-    """Un cas de recette, rattaché à une étape de parcours, et testé dans
-    l'application mobile.
+    """Un cas de recette, rattaché à une étape de parcours et à une version de
+    l'application, et testé dans l'application mobile.
 
-    Les cas sont livrés par les données du module, en même temps que le parcours :
-    le site ne les crée pas, l'administrateur de recette les reformule seulement.
+    Les cas sont livrés par les données du module : ils rejoignent la version en
+    recette au moment où ils sont créés. Le serveur en crée aussi deux sortes, liées
+    à leur cas d'origine : la régression signalée sur un cas conforme d'une version
+    publiée, et la reprise d'un cas reporté à l'ouverture de la version suivante.
+    Le site ne crée pas de cas, l'administrateur de recette les reformule seulement.
+
+    Une fois sa version publiée, un cas ne change plus : seul le signalement d'une
+    régression reste possible depuis lui.
 
     Les champs d'état (résultat, suite, horodatages, itération, action attendue) ne
     changent que par
@@ -77,10 +96,13 @@ class RecetteCas(models.Model):
     """
     _name = 'nkezefuu.recette.cas'
     _description = 'Cas de recette'
-    _order = 'parcours_id, sequence, numero'
+    _order = 'version_id, parcours_id, sequence, numero'
     _rec_name = 'reference'
 
     # --- Le cas de test ----------------------------------------------------
+    # Un cas créé sans version rejoint celle en recette (voir create).
+    version_id = fields.Many2one('nkezefuu.recette.version', string='Version', required=True,
+                                 ondelete='restrict', index=True)
     # restrict : une étape retirée des fichiers de parcours ne doit pas emporter ses
     # cas et leurs résultats (voir nkezefuu.doc.chargement).
     etape_id = fields.Many2one('nkezefuu.doc.etape', string='Étape du parcours', required=True,
@@ -89,9 +111,9 @@ class RecetteCas(models.Model):
                                   store=True, index=True)
     # Ordre du cas dans son étape
     sequence = fields.Integer(string='Séquence', default=10)
-    # Fixé dans les données et jamais renuméroté : c'est un identifiant, cité dans
-    # les échanges. Un cas ajouté plus tard prend le numéro suivant du parcours,
-    # quelle que soit son étape.
+    # Jamais renuméroté : c'est un identifiant, cité dans les échanges. Un cas créé
+    # sans numéro prend le suivant du parcours, quelle que soit son étape ou sa
+    # version (voir create).
     numero = fields.Integer(string='Numéro', required=True, readonly=True)
     reference = fields.Char(string='Réf.', compute='_compute_reference', store=True)
     ecran = fields.Char(string='Écran', required=True)
@@ -100,12 +122,18 @@ class RecetteCas(models.Model):
     attendu = fields.Text(string='Résultat attendu', required=True)
     active = fields.Boolean(default=True)
 
+    # --- Lien avec un cas d'une version publiée -----------------------------
+    origine_id = fields.Many2one('nkezefuu.recette.cas', string="Cas d'origine", ondelete='restrict',
+                                 index=True, readonly=True)
+    origine_type = fields.Selection(ORIGINES, string='Origine', readonly=True)
+    reprise_ids = fields.One2many('nkezefuu.recette.cas', 'origine_id', string='Repris dans',
+                                  context={'active_test': False})
+
     # --- Zone du testeur : l'état du moment --------------------------------
     resultat = fields.Selection(RESULTATS, string='Résultat', required=True, default='not_tested')
     constat = fields.Text(string='Résultat observé')
     teste_par = fields.Many2one('res.users', string='Testé par', ondelete='restrict')
     teste_le = fields.Datetime(string='Testé le')
-    version_apk = fields.Char(string="Version de l'application")
 
     # --- Zone du développeur : l'état du moment ----------------------------
     suite = fields.Selection(SUITES, string='Statut de correction')
@@ -125,6 +153,35 @@ class RecetteCas(models.Model):
     _numero_unique = models.Constraint('unique(parcours_id, numero)',
                                        'Ce numéro de cas existe déjà dans ce parcours.')
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        if any(not vals.get('version_id') for vals in vals_list):
+            en_recette = self.env['nkezefuu.recette.version']._en_recette()
+            if not en_recette:
+                raise UserError("Aucune version n'est en recette : déclarez-la dans "
+                                "data/recette_versions.xml avant d'ajouter des cas.")
+            for vals in vals_list:
+                vals.setdefault('version_id', en_recette.id)
+        Etape = self.env['nkezefuu.doc.etape'].sudo()
+        dernier = {}
+        for vals in vals_list:
+            if vals.get('numero'):
+                continue
+            parcours = Etape.browse(vals['etape_id']).parcours_id
+            if parcours.id not in dernier:
+                # Par l'étape : le parcours du cas est un champ calculé, pas encore
+                # écrit en base pour un cas créé dans la même transaction.
+                self.env.cr.execute("""
+                    SELECT COALESCE(MAX(c.numero), 0)
+                      FROM nkezefuu_recette_cas c
+                      JOIN nkezefuu_doc_etape e ON e.id = c.etape_id
+                     WHERE e.parcours_id = %s
+                """, (parcours.id,))
+                dernier[parcours.id] = self.env.cr.fetchone()[0]
+            dernier[parcours.id] += 1
+            vals['numero'] = dernier[parcours.id]
+        return super().create(vals_list)
+
     @api.depends('parcours_id.prefixe_recette', 'numero')
     def _compute_reference(self):
         for cas in self:
@@ -133,7 +190,9 @@ class RecetteCas(models.Model):
     @api.depends('resultat', 'suite', 'dernier_acteur')
     def _compute_balle(self):
         for cas in self:
-            if cas.dernier_acteur == 'developer':
+            if cas.resultat == 'postponed':
+                cas.balle = 'closed'
+            elif cas.dernier_acteur == 'developer':
                 cas.balle = 'developer' if cas.suite == 'in_progress' else 'tester'
             elif cas.resultat in RESULTATS_OK:
                 cas.balle = 'closed'
@@ -146,37 +205,37 @@ class RecetteCas(models.Model):
     # ----------------------------------------------------------------------
     # Lectures utiles à l'API
     # ----------------------------------------------------------------------
-    def _dernier_resultat_ok(self):
-        """Dernier échange du testeur qui a validé le cas, pour afficher la version
-        du dernier Conforme à côté d'une régression."""
+    def _en_recette(self):
         self.ensure_one()
-        return self.echange_ids.filtered(
-            lambda e: e.type == 'result' and e.statut in RESULTATS_OK
-        )[-1:]
+        return self.version_id.etat == 'in_progress'
 
-    def _echange_regression(self):
+    def _verifier_modifiable(self):
         self.ensure_one()
-        if self.resultat != 'regression':
-            return self.env['nkezefuu.recette.echange']
-        return self.echange_ids.filtered(
-            lambda e: e.type == 'result' and e.statut == 'regression'
-        )[-1:]
+        if not self._en_recette():
+            raise UserError("La version %s est publiée : ses cas ne se modifient plus." % self.version_id.name)
 
-    @api.model
-    def _balles_du_profil(self, roles):
-        """Les valeurs de « balle » qui désignent ce profil, pour le filtre et le
-        compteur « En attente de mon action »."""
-        balles = []
-        if TESTEUR in roles:
-            balles.append('tester')
-        if DEVELOPPEUR in roles:
-            balles.append('developer')
-        return balles
+    def _regression_ouverte(self):
+        """Régression déjà signalée depuis ce cas, dans la version en recette."""
+        self.ensure_one()
+        return self.reprise_ids.filtered(
+            lambda c: c.origine_type == 'regression' and c.version_id.etat == 'in_progress')[:1]
 
     def _droits(self, roles):
         """Ce que ce profil peut faire sur ce cas, pour que le site n'affiche
         que les boutons utilisables, sans recalculer les règles de son côté."""
         self.ensure_one()
+        if not self._en_recette():
+            # Version publiée : lecture seule, hormis le signalement d'une régression.
+            return {
+                'allowed_results': [],
+                'allowed_fix_statuses': [],
+                'can_comment': False,
+                'can_edit': False,
+                'can_archive': False,
+                'can_restore': False,
+                'can_report_regression': bool(TESTEUR in roles and self.active and self.resultat in RESULTATS_OK
+                                              and not self._regression_ouverte()),
+            }
         resultats, suites = [], []
         if self.active:
             if TESTEUR in roles:
@@ -190,6 +249,7 @@ class RecetteCas(models.Model):
             'can_edit': ADMIN in roles,
             'can_archive': ADMIN in roles and self.active,
             'can_restore': ADMIN in roles and not self.active,
+            'can_report_regression': False,
         }
 
     def _resultats_permis(self, roles):
@@ -197,12 +257,14 @@ class RecetteCas(models.Model):
         if self.dernier_acteur == 'developer':
             permis = list(RESULTATS_APRES_REPONSE)
         else:
-            permis = [r for r in RESULTATS_SANS_REPONSE
-                      if r != 'regression' or self.resultat in RESULTATS_OK]
-        # Remettre un cas à « Non testé » est réservé à l'administrateur de recette,
-        # par exemple après avoir réécrit le résultat attendu.
-        if ADMIN in roles and self.resultat != 'not_tested':
-            permis.append('not_tested')
+            permis = list(RESULTATS_SANS_REPONSE)
+        # Reporter un cas, ou le remettre à « Non testé » (par exemple après avoir
+        # réécrit le résultat attendu), est réservé à l'administrateur de recette.
+        if ADMIN in roles:
+            if self.resultat != 'postponed':
+                permis.append('postponed')
+            if self.resultat != 'not_tested':
+                permis.append('not_tested')
         return permis
 
     def _peut_repondre(self):
@@ -212,7 +274,7 @@ class RecetteCas(models.Model):
     # ----------------------------------------------------------------------
     # Écritures : seules portes d'entrée de l'API
     # ----------------------------------------------------------------------
-    def _ajouter_echange(self, user, type_echange, statut=False, texte=False, version_apk=False):
+    def _ajouter_echange(self, user, type_echange, statut=False, texte=False):
         self.ensure_one()
         return self.env['nkezefuu.recette.echange'].sudo().create({
             'cas_id': self.id,
@@ -220,17 +282,18 @@ class RecetteCas(models.Model):
             'type': type_echange,
             'statut': statut,
             'texte': texte,
-            'version_apk': version_apk,
             'auteur_id': user.id,
         })
 
-    def poser_resultat(self, user, resultat, constat=False, version_apk=False):
-        """Le testeur pose un résultat. Ouvre un nouveau tour s'il reprend la main
-        après une réponse du développeur, ou s'il signale une régression."""
+    def poser_resultat(self, user, resultat, constat=False):
+        """Le testeur pose un résultat, ou l'administrateur de recette reporte le
+        cas. Ouvre un nouveau tour au premier test, ou quand le testeur reprend la
+        main après une réponse du développeur."""
         self.ensure_one()
         roles = user._recette_roles()
         if TESTEUR not in roles:
             raise AccessError("Seul un testeur peut poser un résultat.")
+        self._verifier_modifiable()
         if not self.active:
             raise UserError("Ce cas est archivé.")
         if resultat not in dict(RESULTATS):
@@ -238,8 +301,9 @@ class RecetteCas(models.Model):
 
         if resultat not in self._resultats_permis(roles):
             if resultat == 'regression':
-                raise UserError("Ce cas n'a jamais été conforme : il ne peut pas régresser. "
-                                "Posez « Non conforme ».")
+                raise UserError("Une régression se signale depuis le cas conforme d'une version publiée.")
+            if resultat == 'postponed' and ADMIN not in roles:
+                raise UserError("Seul l'administrateur de recette peut reporter un cas.")
             if resultat in ('passed_after_fix', 'still_failing'):
                 raise UserError("Aucune réponse du développeur n'est en attente sur ce cas. "
                                 "Posez « Conforme » ou « Non conforme ».")
@@ -251,28 +315,25 @@ class RecetteCas(models.Model):
             raise UserError("Ce résultat n'est pas possible dans l'état actuel du cas.")
 
         constat = (constat or '').strip()
-        version_apk = (version_apk or '').strip()
+        if resultat == 'postponed' and not constat:
+            raise UserError("Indiquez le motif du report.")
         if resultat in RESULTATS_AVEC_CONSTAT and not constat:
             raise UserError("Renseignez le résultat observé : sans lui, le développeur "
                             "ne peut pas reproduire le problème.")
-        if resultat != 'not_tested' and not version_apk:
-            raise UserError("Indiquez la version de l'application testée.")
 
-        # Une itération s'ouvre au premier test, au premier test qui suit une remise à zéro,
-        # quand le testeur reprend la main après une réponse, ou sur une régression.
-        # La remise à zéro elle-même n'en ouvre pas.
-        nouveau_tour = resultat != 'not_tested' and (
+        # Une itération s'ouvre au premier test, au premier test qui suit une remise à
+        # zéro, ou quand le testeur reprend la main après une réponse. Ni la remise à
+        # zéro ni le report, qui sont des décisions et non des tests, n'en ouvrent.
+        nouveau_tour = resultat not in ('not_tested', 'postponed') and (
             self.tour == 0
             or self.resultat == 'not_tested'
             or self.dernier_acteur == 'developer'
-            or resultat == 'regression'
         )
         vals = {
             'resultat': resultat,
             'constat': constat or False,
             'teste_par': user.id,
             'teste_le': fields.Datetime.now(),
-            'version_apk': version_apk or False,
             'dernier_acteur': 'tester',
         }
         if nouveau_tour:
@@ -282,11 +343,10 @@ class RecetteCas(models.Model):
             # sa réponse précédente reste dans l'historique.
             vals.update({'suite': False, 'reponse': False, 'repondu_par': False, 'repondu_le': False})
         if resultat == 'not_tested':
-            vals.update({'constat': False, 'version_apk': False, 'dernier_acteur': False})
+            vals.update({'constat': False, 'dernier_acteur': False})
 
         self.sudo().write(vals)
-        self._ajouter_echange(user, 'result', statut=resultat, texte=constat or False,
-                              version_apk=version_apk or False)
+        self._ajouter_echange(user, 'result', statut=resultat, texte=constat or False)
         return self
 
     def poser_suite(self, user, suite, reponse=False):
@@ -294,6 +354,7 @@ class RecetteCas(models.Model):
         self.ensure_one()
         if DEVELOPPEUR not in user._recette_roles():
             raise AccessError("Seul le développeur mobile peut répondre.")
+        self._verifier_modifiable()
         if not self.active:
             raise UserError("Ce cas est archivé.")
         if suite not in dict(SUITES):
@@ -302,8 +363,8 @@ class RecetteCas(models.Model):
             raise UserError("Rien à traiter : le testeur n'a pas signalé de problème sur ce cas.")
         reponse = (reponse or '').strip()
         if suite not in SUITES_SANS_TEXTE and not reponse:
-            raise UserError("Expliquez votre réponse : le testeur doit savoir quoi revérifier, "
-                            "ou pourquoi le fonctionnement est normal.")
+            raise UserError("Expliquez votre réponse : le testeur doit savoir pourquoi le "
+                            "fonctionnement est normal, ou quelle précision vous attendez.")
 
         self.sudo().write({
             'suite': suite,
@@ -316,25 +377,76 @@ class RecetteCas(models.Model):
         return self
 
     @api.model
-    def signaler_etape_non_implementee(self, user, etape, constat, version_apk):
+    def signaler_etape_non_implementee(self, user, etape, constat):
         """Le testeur signale en une fois qu'une étape entière manque dans
-        l'application : chaque cas encore non testé de l'étape passe en « Non
-        implémenté », avec le même résultat observé, comme s'il était posé cas par
-        cas. Les cas déjà testés gardent leur résultat."""
+        l'application : chaque cas encore non testé de l'étape, dans la version en
+        recette, passe en « Non implémenté », avec le même résultat observé, comme
+        s'il était posé cas par cas. Les cas déjà testés gardent leur résultat."""
         if TESTEUR not in user._recette_roles():
             raise AccessError("Seul un testeur peut signaler une étape non implémentée.")
-        cases = self.sudo().search([('etape_id', '=', etape.id), ('resultat', '=', 'not_tested')])
+        cases = self.sudo().search([('etape_id', '=', etape.id), ('resultat', '=', 'not_tested'),
+                                    ('version_id.etat', '=', 'in_progress')])
         if not cases:
             raise UserError("Aucun cas non testé dans cette étape : signalez les cas un par un.")
         for cas in cases:
-            cas.poser_resultat(user, 'not_implemented', constat, version_apk)
+            cas.poser_resultat(user, 'not_implemented', constat)
         return cases
+
+    def _reprendre(self, version, origine_type):
+        """Nouveau cas dans `version`, avec la même consigne que celui-ci, lié à lui
+        comme cas d'origine. Il prend le numéro suivant du parcours."""
+        self.ensure_one()
+        return self.sudo().create({
+            'version_id': version.id,
+            'etape_id': self.etape_id.id,
+            'sequence': self.sequence,
+            'ecran': self.ecran,
+            'profil': self.profil,
+            'action': self.action,
+            'attendu': self.attendu,
+            'origine_id': self.id,
+            'origine_type': origine_type,
+        })
+
+    def signaler_regression(self, user, constat):
+        """Le testeur constate qu'un cas conforme d'une version publiée ne
+        fonctionne plus. Le cas d'origine ne change pas : un nouveau cas est créé
+        dans la version en recette, en « Régression », et suit le circuit habituel.
+        S'il n'y a pas de version en recette, un Correctif est ouvert."""
+        self.ensure_one()
+        if TESTEUR not in user._recette_roles():
+            raise AccessError("Seul un testeur peut signaler une régression.")
+        if self._en_recette():
+            raise UserError("Ce cas est dans la version en recette : posez « Non conforme ».")
+        if not self.active or self.resultat not in RESULTATS_OK:
+            raise UserError("Une régression se signale depuis un cas conforme.")
+        deja = self._regression_ouverte()
+        if deja:
+            raise UserError("Régression déjà signalée en %s (%s)." % (deja.version_id.name, deja.reference))
+        constat = (constat or '').strip()
+        if not constat:
+            raise UserError("Renseignez le résultat observé : sans lui, le développeur "
+                            "ne peut pas reproduire le problème.")
+
+        version = self.env['nkezefuu.recette.version']._ouvrir_correctif()
+        cas = self._reprendre(version, 'regression')
+        cas.write({
+            'resultat': 'regression',
+            'constat': constat,
+            'teste_par': user.id,
+            'teste_le': fields.Datetime.now(),
+            'dernier_acteur': 'tester',
+            'tour': 1,
+        })
+        cas._ajouter_echange(user, 'result', statut='regression', texte=constat)
+        return cas
 
     def commenter(self, user, texte):
         """Message libre, sans changer l'état : tous les profils."""
         self.ensure_one()
         if not user._recette_roles():
             raise AccessError("Ce compte n'a pas accès à la recette.")
+        self._verifier_modifiable()
         texte = (texte or '').strip()
         if not texte:
             raise UserError("Le commentaire est vide.")
@@ -348,6 +460,7 @@ class RecetteCas(models.Model):
         self.ensure_one()
         if ADMIN not in user._recette_roles():
             raise AccessError("Seul l'administrateur de recette peut modifier un cas.")
+        self._verifier_modifiable()
 
         changements, nouvelles = [], {}
         for champ in CHAMPS_TEXTE:
@@ -378,6 +491,7 @@ class RecetteCas(models.Model):
         self.ensure_one()
         if ADMIN not in user._recette_roles():
             raise AccessError("Seul l'administrateur de recette peut archiver un cas.")
+        self._verifier_modifiable()
         if not self.active:
             raise UserError("Ce cas est déjà archivé.")
         self.sudo().write({'active': False})
@@ -388,6 +502,7 @@ class RecetteCas(models.Model):
         self.ensure_one()
         if ADMIN not in user._recette_roles():
             raise AccessError("Seul l'administrateur de recette peut restaurer un cas.")
+        self._verifier_modifiable()
         if self.active:
             raise UserError("Ce cas n'est pas archivé.")
         self.sudo().write({'active': True})

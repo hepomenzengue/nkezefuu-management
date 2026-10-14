@@ -14,9 +14,9 @@ Module Odoo 19 qui porte tout ce qu'affiche le site `apps-docs.nkezefuu.com` :
 
 - la **documentation** : les services de l'API mobile, les parcours et leurs étapes,
   les cas de test API ;
-- la **recette** de chaque parcours : des cas rattachés à ses étapes, testés dans
-  l'application mobile, avec leurs résultats et l'historique des échanges entre le
-  testeur et le développeur mobile.
+- la **recette**, par version de l'application : des cas rattachés aux étapes des
+  parcours, testés dans l'application mobile, avec leurs résultats et l'historique
+  des échanges entre le testeur et le développeur mobile.
 
 Tout est lu et manipulé uniquement par API ; le site demande une connexion pour
 chacune de ses pages. Le module n'a volontairement ni vue ni menu. Il ne dépend que
@@ -26,8 +26,8 @@ de `base`, et gère lui-même ses jetons de connexion.
 
 | Profil | Ce qu'il peut faire |
 |---|---|
-| Testeur | lire tout le site, enregistrer un résultat, commenter |
-| Administrateur de recette | tout ce que fait le testeur, plus reformuler un cas, le changer d'étape, l'archiver, le restaurer, le remettre à « Non testé » |
+| Testeur | lire tout le site, enregistrer un résultat, commenter, signaler une régression |
+| Administrateur de recette | tout ce que fait le testeur, plus reformuler un cas, le changer d'étape, l'archiver, le restaurer, le reporter, le remettre à « Non testé », publier la version |
 | Développeur mobile | lire tout le site, répondre au testeur, commenter (un compte portail suffit) |
 
 Chaque profil est attribué explicitement, administrateurs compris : le statut
@@ -58,14 +58,48 @@ jour s'arrête et nomme l'étape, plutôt que de perdre des résultats.
 Pour un nouveau processus : l'API, puis son parcours et ses étapes dans ces fichiers,
 puis ses cas de recette.
 
+## Versions
+
+La recette est organisée par version de l'application. Une version ne contient que
+ses nouveautés : les cas écrits pour les fonctionnalités, mises à jour et correctifs
+qu'elle apporte. Les parcours et les services, eux, ne sont pas versionnés.
+
+Une seule version est en recette à la fois. Elle est déclarée dans
+`data/recette_versions.xml`, rejoué à chaque mise à jour. Le numéro doit suivre la
+dernière version publiée, et son type s'en déduit :
+
+| Type | Quand | Après 0.0.1 |
+|---|---|---|
+| Correctif | correction ou petite mise à jour | 0.0.2 |
+| Évolution | nouvelle fonctionnalité ou nouveau parcours | 0.1.0 |
+| Majeure | refonte importante | 1.0.0 |
+
+Toutes les actions de recette se font sur le site, aucune dans Odoo :
+
+- **Publier** (administrateur de recette) : refusé tant qu'un cas actif n'est ni
+  conforme ni reporté. La version et ses cas sont ensuite figés, consultables en
+  lecture seule.
+- **Reporter** un cas (administrateur de recette, motif obligatoire) : la version
+  peut sortir sans lui. À l'ouverture de la version suivante, il y est repris
+  automatiquement, en « Non testé », lié à son cas d'origine.
+- **Signaler une régression** (testeur), depuis un cas conforme d'une version
+  publiée : un nouveau cas est créé dans la version en recette, en « Régression »,
+  lié au cas d'origine qui, lui, ne change pas. S'il n'y a pas de version en
+  recette, un Correctif est ouvert automatiquement. Si on déclare ensuite une
+  Évolution dans `recette_versions.xml`, ce Correctif prend son numéro et garde ses
+  cas.
+
 ## Cas de recette
 
 `data/recette_donnees.xml`, en `noupdate="1"` : 125 cas répartis sur les 4 parcours
-(références RMP, RLP, RMCB, RCB). Chacun trouve son étape par le code du parcours et
-la clé de l'étape. Ils sont créés à l'installation et jamais réécrits ensuite : ce
-que l'administrateur de recette reformule depuis le site survit aux mises à jour, et
-un cas ajouté plus tard dans ce fichier est créé à la mise à jour suivante sans
-toucher aux autres. Le site ne crée pas de cas.
+(références RMP, RLP, RMCB, RCB), qui forment la version 0.0.1. Chacun trouve son
+étape par le code du parcours et la clé de l'étape. Ils sont créés une fois et jamais
+réécrits ensuite : ce que l'administrateur de recette reformule depuis le site
+survit aux mises à jour. Un cas ajouté plus tard dans ce fichier est créé à la mise
+à jour suivante, dans la version en recette (la mise à jour s'arrête s'il n'y en a
+pas). Il s'écrit sans numéro : il prend le suivant du parcours, après ceux que le
+serveur a créés entre-temps (régressions, reprises de reports). Le site ne crée pas
+de cas.
 
 On archive un cas devenu inutile, on ne le supprime pas.
 
@@ -86,25 +120,31 @@ restent en français. Jeton Bearer, réponse HTTP 200 avec le vrai résultat dan
 | `GET /docs/services` | les services, rangés par catégorie |
 | `GET /docs/journeys` | la liste des parcours |
 | `GET /docs/journeys/{code}` | un parcours : arbre des étapes numérotées, cas de test API |
-| `GET /journeys` | tableau de bord de la recette : indicateurs par parcours et synthèse |
-| `GET /journeys/{code}` | la recette d'un parcours, étapes et cas ; filtres `assigned_to_me=1`, `status=failed,regression`, `include_archived=1` |
-| `POST /steps/{id}/not-implemented` | le testeur signale une étape absente de l'application : ses cas non testés passent en « Non implémenté » ; `observed_result`, `app_version` |
+| `GET /versions` | les versions, de la plus récente à la plus ancienne, et celle affichée par défaut |
+| `POST /versions/{id}/publish` | publier la version en recette (administrateur de recette) |
+| `GET /journeys` | tableau de bord d'une version : indicateurs par parcours et synthèse ; `version={id}`, sinon celle en recette, sinon la dernière publiée |
+| `GET /journeys/{code}` | la recette d'un parcours dans une version, étapes et cas ; filtres `version={id}`, `awaiting=tester` ou `developer`, `status=failed,regression`, `include_archived=1` |
+| `POST /steps/{id}/not-implemented` | le testeur signale une étape absente de l'application : ses cas non testés de la version en recette passent en « Non implémenté » ; `observed_result` |
 | `GET /cases/{id}` | un cas avec son historique |
 | `POST /cases/{id}/update` | reformuler (`screen`, `user_profile`, `action`, `expected_result`) ou changer d'étape (`step_id`) (administrateur de recette) |
 | `POST /cases/{id}/archive`, `/restore` | archiver, restaurer (administrateur de recette) |
-| `POST /cases/{id}/result` | le testeur enregistre un résultat : `result`, `observed_result`, `app_version` |
+| `POST /cases/{id}/result` | le testeur enregistre un résultat, ou l'administrateur de recette reporte le cas : `result`, `observed_result` (le motif pour un report) |
+| `POST /cases/{id}/regression` | le testeur signale la régression d'un cas conforme d'une version publiée : `observed_result` ; renvoie le nouveau cas |
 | `POST /cases/{id}/reply` | le développeur répond : `fix_status`, `reply` |
 | `POST /cases/{id}/comment` | message libre : `text` |
 
 Codes des résultats : `not_tested`, `passed`, `failed`, `blocked`, `not_implemented`,
-`passed_after_fix`, `still_failing`, `regression`. « Non implémenté » (la fonction
+`passed_after_fix`, `still_failing`, `regression` (posé seulement par le signalement
+d'une régression), `postponed` (Reporté). « Non implémenté » (la fonction
 n'existe pas dans l'application) se distingue de « Non conforme » (elle existe mais se
 comporte mal) et de « Bloqué » (le test est empêché par autre chose) : il attend une
 action du développeur, qui peut aussi demander des précisions en cas
 d'incompréhension. Statuts de correction : `in_progress`,
 `fixed_to_retest`, `works_as_intended`, `needs_clarification`. Action attendue de
 (`awaiting`) : `tester`, `developer`, `closed`. Profils (`roles`) : `tester`,
-`acceptance_admin`, `mobile_developer`. Chaque code est renvoyé avec son libellé
+`acceptance_admin`, `mobile_developer`. Versions : type `patch`, `minor`, `major` ;
+état `in_progress`, `published`. Lien d'un cas avec son cas d'origine (`origin`) ou
+ses reprises (`followups`) : `regression`, `postponed`. Chaque code est renvoyé avec son libellé
 français (`{code, label}`), et chaque cas avec ses `permissions` pour le profil
 connecté.
 
