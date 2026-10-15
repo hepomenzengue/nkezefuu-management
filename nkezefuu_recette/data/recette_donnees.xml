@@ -1214,4 +1214,24 @@
         <field name="attendu">La validation est effectuée.</field>
     </record>
 
+    <!-- ====================================================================== -->
+    <!-- Autres parcours -->
+    <!-- ====================================================================== -->
+
+    <!-- Régression constatée hors recette : le tableau de bord filtrait les cartes
+         selon le rôle dans la version précédente de l'application. Écrit
+         directement en « Régression », il attend le développeur. -->
+    <record id="cas_rap_001" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'autres-parcours'), ('cle', '=', 'tableau-de-bord')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Tableau de bord</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Se connecter avec un membre, puis consulter le tableau de bord.</field>
+        <field name="attendu">Seules les cartes du rôle mobile du membre sont affichées. Les fonctions des autres rôles n'apparaissent pas.</field>
+        <field name="resultat">regression</field>
+        <field name="constat">Toutes les fonctions sont affichées, quel que soit le rôle du membre. Le tableau de bord ne montrait que les cartes du rôle dans la version précédente de l'application.</field>
+        <field name="dernier_acteur">tester</field>
+        <field name="tour">1</field>
+    </record>
+
 </odoo>

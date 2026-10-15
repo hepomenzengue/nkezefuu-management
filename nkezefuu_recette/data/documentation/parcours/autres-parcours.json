@@ -1,0 +1,94 @@
+{
+  "code": "autres-parcours",
+  "name": "Autres parcours",
+  "groupe": "Général",
+  "sequence": 5,
+  "ligne_utilisateur": "Fonctions de l'application qui n'ont pas encore leur propre parcours : une étape par fonction. Quand une fonction reçoit son parcours, son étape et ses cas y sont déplacés.",
+  "prefixe_recette": "RAP",
+  "etapes": [
+    {
+      "cle": "tableau-de-bord",
+      "titre": "Tableau de bord selon le rôle",
+      "texte": "À la connexion, l'app appelle `GET mobile-functions-by-user`, qui renvoie uniquement les cartes du rôle mobile attribué au membre dans Odoo, avec leur valeur. Le tableau de bord n'affiche que ces cartes : une fonction absente du rôle n'apparaît pas.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "historique",
+      "titre": "Historique",
+      "texte": "Carte « Historique » : `GET member-transactions-history` liste les mouvements du compte du membre.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "a-recevoir",
+      "titre": "À recevoir",
+      "texte": "Carte « À recevoir » : `GET member-recipes` liste les entrées d'argent à venir du membre.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "a-payer",
+      "titre": "À payer",
+      "texte": "Carte « À payer » : `GET member-charges` liste les échéances en attente du membre. Il peut passer une charge, ou toutes, en paiement manuel ou automatique, et régler une échéance avec son solde (`POST pay-line`).",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "actions",
+      "titre": "Actions",
+      "texte": "Carte « Actions » : `GET member-actions` présente le portefeuille d'actions du membre, projet par projet.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "marche",
+      "titre": "Marché",
+      "texte": "Carte « Marché » : `GET for-sale-list` liste les actions et parts d'investissement en vente. Le membre peut mettre ses actions en vente, ajuster ou retirer son offre, et acheter avec son solde.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "investissements",
+      "titre": "Investissements",
+      "texte": "Carte « Investissements » : `GET member-investments` liste les investissements du membre, en cours et échus.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "suivi-des-dettes",
+      "titre": "Suivi des dettes",
+      "texte": "Carte « Suivi des dettes » : `GET due-charges-list` présente les échéances en retard par membre et par projet, et `GET user-due-charges-list` le détail d'un débiteur.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "paiements-avalises",
+      "titre": "Paiements avalisés",
+      "texte": "Carte « Paiements avalisés » : `GET member-avalised-payments` liste les échéances en attente pour lesquelles le membre est avaliste.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "referencement",
+      "titre": "Référencement",
+      "texte": "Carte « Référencement » : `GET referenced-members-list` liste tous les membres référencés, regroupés par référent.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "prevision-de-tresorerie",
+      "titre": "Prévision de trésorerie",
+      "texte": "Carte « Prévision de trésorerie » : `GET project-treasury-forecast-list` présente la trésorerie prévue de chaque projet à la fin du mois prochain.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
+      "cle": "mes-references",
+      "titre": "Mes référencés",
+      "texte": "Carte « Mes référencés » : `GET member-referenced-members-list` liste les membres référencés par le membre connecté.",
+      "blocs": [],
+      "etapes": []
+    }
+  ]
+}

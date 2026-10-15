@@ -91,8 +91,15 @@ Toutes les actions de recette se font sur le site, aucune dans Odoo :
 
 ## Cas de recette
 
-`data/recette_donnees.xml`, en `noupdate="1"` : 125 cas répartis sur les 4 parcours
-(références RMP, RLP, RMCB, RCB), qui forment la version 0.0.1. Chacun trouve son
+`data/recette_donnees.xml`, en `noupdate="1"` : 126 cas répartis sur 5 parcours
+(références RMP, RLP, RMCB, RCB, RAP), qui forment la version 0.0.1.
+
+Le parcours « Autres parcours » (RAP) regroupe les fonctions de l'application qui
+n'ont pas encore leur propre parcours, une étape par fonction (tableau de bord,
+historique, à payer, marché…). Ses étapes n'ont des cas que lorsqu'il le faut, par
+exemple une régression sur une fonction jamais testée dans la recette : le cas est
+alors écrit dans ce fichier, directement en « Régression ». Quand une fonction
+reçoit son parcours, son étape et ses cas y sont déplacés. Chacun trouve son
 étape par le code du parcours et la clé de l'étape. Ils sont créés une fois et jamais
 réécrits ensuite : ce que l'administrateur de recette reformule depuis le site
 survit aux mises à jour. Un cas ajouté plus tard dans ce fichier est créé à la mise
