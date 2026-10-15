@@ -140,9 +140,12 @@ restent en français. Jeton Bearer, réponse HTTP 200 avec le vrai résultat dan
 | `POST /cases/{id}/reply` | le développeur répond : `fix_status`, `reply` |
 | `POST /cases/{id}/comment` | message libre : `text` |
 
-Codes des résultats : `not_tested`, `passed`, `failed`, `blocked`, `not_implemented`,
-`passed_after_fix`, `still_failing`, `regression` (posé seulement par le signalement
-d'une régression), `postponed` (Reporté). « Non implémenté » (la fonction
+Codes des résultats : `not_tested`, `passed`, `passed_with_reserve`, `failed`, `blocked`,
+`not_implemented`, `passed_after_fix`, `still_failing`, `regression` (posé seulement par
+le signalement d'une régression), `postponed` (Reporté). « Conforme avec réserve » (ce
+qui était demandé est bon, mais un point reste à corriger, par exemple sur un ajout du
+développeur) exige la réserve dans `observed_result`, renvoie le cas au développeur et
+empêche la publication tant qu'elle n'est pas levée. « Non implémenté » (la fonction
 n'existe pas dans l'application) se distingue de « Non conforme » (elle existe mais se
 comporte mal) et de « Bloqué » (le test est empêché par autre chose) : il attend une
 action du développeur, qui peut aussi demander des précisions en cas

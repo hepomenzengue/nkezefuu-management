@@ -8,6 +8,9 @@ from .res_users import ADMIN, DEVELOPPEUR, TESTEUR
 RESULTATS = [
     ('not_tested', 'Non testé'),
     ('passed', 'Conforme'),
+    # Ce qui était demandé est bon, mais un point reste à corriger (souvent sur un
+    # ajout du développeur) : le cas retourne au développeur avec la réserve à lever.
+    ('passed_with_reserve', 'Conforme avec réserve'),
     ('failed', 'Non conforme'),
     ('blocked', 'Bloqué'),
     # La fonction, l'écran ou le bouton n'existe pas dans l'application : à ne pas
@@ -43,23 +46,24 @@ BALLES = [
 ]
 
 RESULTATS_OK = ('passed', 'passed_after_fix')
-RESULTATS_EN_ECHEC = ('failed', 'still_failing', 'regression', 'not_implemented')
+RESULTATS_EN_ECHEC = ('passed_with_reserve', 'failed', 'still_failing', 'regression', 'not_implemented')
 
 # Ce que le testeur peut poser selon que le développeur a répondu en dernier ou non.
 # Après une réponse, il confirme ou conteste ; sans réponse, il constate.
 # Non implémenté reste possible après une réponse : la fonction peut être toujours
 # absente de la version livrée.
-RESULTATS_SANS_REPONSE = ('passed', 'failed', 'blocked', 'not_implemented')
-RESULTATS_APRES_REPONSE = ('passed', 'passed_after_fix', 'still_failing', 'blocked', 'not_implemented')
+RESULTATS_SANS_REPONSE = ('passed', 'passed_with_reserve', 'failed', 'blocked', 'not_implemented')
+RESULTATS_APRES_REPONSE = ('passed', 'passed_after_fix', 'passed_with_reserve', 'still_failing', 'blocked',
+                           'not_implemented')
 
 # Le résultat observé est exigé dès que quelque chose ne va pas : un cas en échec
 # sans explication ne sert à rien au développeur. Pour un report, le même champ
-# porte le motif.
-RESULTATS_AVEC_CONSTAT = ('failed', 'still_failing', 'regression', 'blocked', 'not_implemented', 'postponed')
+# porte le motif, et pour une conformité avec réserve, la réserve.
+RESULTATS_AVEC_CONSTAT = ('passed_with_reserve', 'failed', 'still_failing', 'regression', 'blocked', 'not_implemented', 'postponed')
 
 # Le développeur ne peut répondre que si le testeur attend son action, ou pour
 # compléter sa propre réponse tant que le testeur n'a pas repris la main.
-RESULTATS_A_TRAITER = ('failed', 'still_failing', 'regression', 'blocked', 'not_implemented')
+RESULTATS_A_TRAITER = ('passed_with_reserve', 'failed', 'still_failing', 'regression', 'blocked', 'not_implemented')
 
 # Une réponse sans explication est acceptée pour « En cours d'analyse » et « Corrigé, à
 # retester » : le testeur rejoue le même cas, le statut suffit. « Fonctionnement normal »
@@ -317,6 +321,8 @@ class RecetteCas(models.Model):
         constat = (constat or '').strip()
         if resultat == 'postponed' and not constat:
             raise UserError("Indiquez le motif du report.")
+        if resultat == 'passed_with_reserve' and not constat:
+            raise UserError("Indiquez la réserve : ce qui reste à corriger pour que le cas soit conforme.")
         if resultat in RESULTATS_AVEC_CONSTAT and not constat:
             raise UserError("Renseignez le résultat observé : sans lui, le développeur "
                             "ne peut pas reproduire le problème.")

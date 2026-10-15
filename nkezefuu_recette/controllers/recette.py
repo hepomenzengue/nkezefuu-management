@@ -19,8 +19,8 @@ _logger = logging.getLogger(__name__)
 # passe n'est pas installé sur cette instance.
 LONGUEUR_MIN_MOT_DE_PASSE = 8
 
-COUNTERS = ('total', 'not_tested', 'passed', 'failed', 'regression', 'blocked', 'not_implemented', 'postponed',
-            'awaiting_tester', 'awaiting_developer')
+COUNTERS = ('total', 'not_tested', 'passed', 'passed_with_reserve', 'failed', 'regression', 'blocked',
+            'not_implemented', 'postponed', 'awaiting_tester', 'awaiting_developer')
 
 # Champs d'un cas que l'administrateur de recette peut modifier : nom dans l'API,
 # nom du champ Odoo.
@@ -65,6 +65,7 @@ class RecetteController(SocleApi, http.Controller):
             'total': len(cases),
             'not_tested': resultats.count('not_tested'),
             'passed': resultats.count('passed') + resultats.count('passed_after_fix'),
+            'passed_with_reserve': resultats.count('passed_with_reserve'),
             'failed': resultats.count('failed') + resultats.count('still_failing'),
             'regression': resultats.count('regression'),
             'blocked': resultats.count('blocked'),
