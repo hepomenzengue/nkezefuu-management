@@ -1286,4 +1286,45 @@
         <field name="tour">1</field>
     </record>
 
+    <!-- Constatés hors recette le 16/10 : l'app n'a pas de délai maximal sur ses appels
+         ni de gestion des erreurs réseau. Écrits directement en « Non conforme », ils
+         attendent le développeur ; ils se corrigent ensemble dans le client HTTP commun
+         de l'app, mais se testent écran par écran. -->
+    <record id="cas_rap_connexion_bouton" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'autres-parcours'), ('cle', '=', 'connexion-reseau')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Écran de connexion</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Avec un réseau actif mais très lent, saisir ses identifiants, puis toucher « Se connecter ».</field>
+        <field name="attendu">Après un délai maximal sans réponse, le chargement s'arrête. Un message indique la cause, pas de connexion ou serveur trop long à répondre, jamais un message métier. Le bouton redevient cliquable, les identifiants saisis restent remplis, et une nouvelle tentative aboutit une fois le réseau rétabli.</field>
+        <field name="resultat">failed</field>
+        <field name="constat">Le loader du bouton « Se connecter » tourne indéfiniment et le bouton reste bloqué. Seul l'arrêt complet de l'application permet de réessayer.</field>
+        <field name="dernier_acteur">tester</field>
+        <field name="tour">1</field>
+    </record>
+    <record id="cas_rap_chargement_sans_fin" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'autres-parcours'), ('cle', '=', 'connexion-reseau')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Écrans de l'application</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Avec un réseau actif mais très lent ou instable, ouvrir un écran de l'application.</field>
+        <field name="attendu">Après un délai maximal sans réponse, le chargement s'arrête. Un message indique la cause, pas de connexion ou serveur trop long à répondre, jamais un message métier. Un bouton « Réessayer » recharge l'écran une fois le réseau rétabli, sans quitter l'application.</field>
+        <field name="resultat">failed</field>
+        <field name="constat">L'écran charge indéfiniment : aucun délai n'arrête le chargement. Même une fois le réseau rétabli, seul l'arrêt complet de l'application permet de revenir sur l'écran.</field>
+        <field name="dernier_acteur">tester</field>
+        <field name="tour">1</field>
+    </record>
+    <record id="cas_rap_hors_connexion_tableau" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'autres-parcours'), ('cle', '=', 'connexion-reseau')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Tableau de bord</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Couper la connexion internet, puis ouvrir le tableau de bord.</field>
+        <field name="attendu">Un message indique l'absence de connexion. Un bouton « Réessayer » recharge le tableau de bord une fois la connexion rétablie, sans quitter l'application.</field>
+        <field name="resultat">failed</field>
+        <field name="constat">Le tableau de bord affiche « Utilisateur non trouvé », message qui ne vient pas du serveur, à la place d'un message de connexion. Une fois la connexion rétablie, seul l'arrêt complet de l'application permet de revenir sur l'écran.</field>
+        <field name="dernier_acteur">tester</field>
+        <field name="tour">1</field>
+    </record>
+
 </odoo>

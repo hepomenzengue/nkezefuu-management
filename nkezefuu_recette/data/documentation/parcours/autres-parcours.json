@@ -7,6 +7,13 @@
   "prefixe_recette": "RAP",
   "etapes": [
     {
+      "cle": "connexion-reseau",
+      "titre": "Connexion réseau",
+      "texte": "Règle commune à tous les appels de l'app : si le serveur ne répond pas dans un délai maximal, le chargement s'arrête, un message indique la cause (pas de connexion, ou serveur trop long à répondre) et l'écran propose de réessayer, sans quitter l'application.",
+      "blocs": [],
+      "etapes": []
+    },
+    {
       "cle": "tableau-de-bord",
       "titre": "Tableau de bord selon le rôle",
       "texte": "À la connexion, l'app appelle `GET mobile-functions-by-user`, qui renvoie uniquement les cartes du rôle mobile attribué au membre dans Odoo, avec leur valeur. Le tableau de bord n'affiche que ces cartes : une fonction absente du rôle n'apparaît pas.",
