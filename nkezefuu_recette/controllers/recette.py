@@ -156,6 +156,8 @@ class RecetteController(SocleApi, http.Controller):
             'iteration': cas.tour,
             'awaiting': self._sel(cas.balle, BALLES),
             'permissions': cas._droits(roles),
+            # Pour la mention « 2 captures » sur la ligne ; les captures sont dans l'historique
+            'capture_count': len(cas.echange_ids.capture_ids),
         }
         if avec_echanges:
             data['history'] = [self._serialize_echange(e) for e in cas.echange_ids]
@@ -171,6 +173,9 @@ class RecetteController(SocleApi, http.Controller):
             'text': echange.texte or '',
             'author': self._user(echange.auteur_id),
             'date': self._dt(echange.create_date),
+            # L'image se lit par /captures/{id}, avec le jeton
+            'captures': [{'id': a.id, 'name': a.name, 'mimetype': a.mimetype}
+                         for a in echange.capture_ids.sorted('id')],
         }
 
     def _serialize_step(self, etape, cases, user, numeros):
@@ -460,7 +465,8 @@ class RecetteController(SocleApi, http.Controller):
     @http.route('/api/recette/cases/<int:cas_id>/result', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def case_result(self, cas_id, **kw):
         def action(user, body):
-            cas = self._get_cas(cas_id).poser_resultat(user, body.get('result'), body.get('observed_result'))
+            cas = self._get_cas(cas_id).poser_resultat(user, body.get('result'), body.get('observed_result'),
+                                                            body.get('captures'))
             return self._cas_complet(cas, user)
         return self._run('POST', action, ecriture=True)
 
@@ -470,20 +476,42 @@ class RecetteController(SocleApi, http.Controller):
         observed_result. Renvoie le nouveau cas, créé dans la version en recette
         (ouverte en Correctif s'il n'y en avait pas)."""
         def action(user, body):
-            cas = self._get_cas(cas_id).signaler_regression(user, body.get('observed_result'))
+            cas = self._get_cas(cas_id).signaler_regression(user, body.get('observed_result'), body.get('captures'))
             return self._cas_complet(cas, user)
         return self._run('POST', action, ecriture=True)
 
     @http.route('/api/recette/cases/<int:cas_id>/reply', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def case_reply(self, cas_id, **kw):
         def action(user, body):
-            cas = self._get_cas(cas_id).poser_suite(user, body.get('fix_status'), body.get('reply'))
+            cas = self._get_cas(cas_id).poser_suite(user, body.get('fix_status'), body.get('reply'), body.get('captures'))
             return self._cas_complet(cas, user)
         return self._run('POST', action, ecriture=True)
 
     @http.route('/api/recette/cases/<int:cas_id>/comment', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
     def case_comment(self, cas_id, **kw):
         def action(user, body):
-            cas = self._get_cas(cas_id).commenter(user, body.get('text'))
+            cas = self._get_cas(cas_id).commenter(user, body.get('text'), body.get('captures'))
             return self._cas_complet(cas, user)
         return self._run('POST', action, ecriture=True)
+
+    @http.route('/api/recette/captures/<int:capture_id>', type='http', methods=['GET', 'OPTIONS'], auth="none", csrf=False)
+    def capture(self, capture_id, **kw):
+        """Image d'une capture jointe à un échange. Renvoie l'image elle-même, pas du
+        JSON ; un refus (jeton, capture introuvable) reste au format habituel."""
+        headers = self._headers('GET')
+        if request.httprequest.method == 'OPTIONS':
+            return Response(status=200, headers=headers)
+        user, error = self._authenticate(headers)
+        if error:
+            return error
+        # Seules les pièces jointes des échanges de recette passent par ici
+        capture = request.env['ir.attachment'].sudo().search([
+            ('id', '=', capture_id), ('res_model', '=', 'nkezefuu.recette.echange')], limit=1)
+        if not capture:
+            return self._error(headers, 404, 'Capture introuvable')
+        headers.update({
+            'Content-Type': capture.mimetype,
+            # Une capture ne change jamais : le navigateur peut la garder
+            'Cache-Control': 'private, max-age=86400',
+        })
+        return Response(response=capture.raw, status=200, headers=headers)

@@ -278,9 +278,10 @@ class RecetteCas(models.Model):
     # ----------------------------------------------------------------------
     # Écritures : seules portes d'entrée de l'API
     # ----------------------------------------------------------------------
-    def _ajouter_echange(self, user, type_echange, statut=False, texte=False):
+    def _ajouter_echange(self, user, type_echange, statut=False, texte=False, captures=()):
+        """captures : déjà lues par nkezefuu.recette.echange._lire_captures."""
         self.ensure_one()
-        return self.env['nkezefuu.recette.echange'].sudo().create({
+        echange = self.env['nkezefuu.recette.echange'].sudo().create({
             'cas_id': self.id,
             'tour': self.tour,
             'type': type_echange,
@@ -288,8 +289,17 @@ class RecetteCas(models.Model):
             'texte': texte,
             'auteur_id': user.id,
         })
+        if captures:
+            self.env['ir.attachment'].sudo().create([{
+                'name': nom,
+                'raw': contenu,
+                'mimetype': mimetype,
+                'res_model': echange._name,
+                'res_id': echange.id,
+            } for nom, contenu, mimetype in captures])
+        return echange
 
-    def poser_resultat(self, user, resultat, constat=False):
+    def poser_resultat(self, user, resultat, constat=False, captures=None):
         """Le testeur pose un résultat, ou l'administrateur de recette reporte le
         cas. Ouvre un nouveau tour au premier test, ou quand le testeur reprend la
         main après une réponse du développeur."""
@@ -326,6 +336,7 @@ class RecetteCas(models.Model):
         if resultat in RESULTATS_AVEC_CONSTAT and not constat:
             raise UserError("Renseignez le résultat observé : sans lui, le développeur "
                             "ne peut pas reproduire le problème.")
+        captures = self.env['nkezefuu.recette.echange']._lire_captures(captures)
 
         # Une itération s'ouvre au premier test, au premier test qui suit une remise à
         # zéro, ou quand le testeur reprend la main après une réponse. Ni la remise à
@@ -352,10 +363,10 @@ class RecetteCas(models.Model):
             vals.update({'constat': False, 'dernier_acteur': False})
 
         self.sudo().write(vals)
-        self._ajouter_echange(user, 'result', statut=resultat, texte=constat or False)
+        self._ajouter_echange(user, 'result', statut=resultat, texte=constat or False, captures=captures)
         return self
 
-    def poser_suite(self, user, suite, reponse=False):
+    def poser_suite(self, user, suite, reponse=False, captures=None):
         """Le développeur mobile répond au testeur."""
         self.ensure_one()
         if DEVELOPPEUR not in user._recette_roles():
@@ -371,6 +382,7 @@ class RecetteCas(models.Model):
         if suite not in SUITES_SANS_TEXTE and not reponse:
             raise UserError("Expliquez votre réponse : le testeur doit savoir pourquoi le "
                             "fonctionnement est normal, ou quelle précision vous attendez.")
+        captures = self.env['nkezefuu.recette.echange']._lire_captures(captures)
 
         self.sudo().write({
             'suite': suite,
@@ -379,7 +391,7 @@ class RecetteCas(models.Model):
             'repondu_le': fields.Datetime.now(),
             'dernier_acteur': 'developer',
         })
-        self._ajouter_echange(user, 'reply', statut=suite, texte=reponse or False)
+        self._ajouter_echange(user, 'reply', statut=suite, texte=reponse or False, captures=captures)
         return self
 
     @api.model
@@ -414,7 +426,7 @@ class RecetteCas(models.Model):
             'origine_type': origine_type,
         })
 
-    def signaler_regression(self, user, constat):
+    def signaler_regression(self, user, constat, captures=None):
         """Le testeur constate qu'un cas conforme d'une version publiée ne
         fonctionne plus. Le cas d'origine ne change pas : un nouveau cas est créé
         dans la version en recette, en « Régression », et suit le circuit habituel.
@@ -433,6 +445,7 @@ class RecetteCas(models.Model):
         if not constat:
             raise UserError("Renseignez le résultat observé : sans lui, le développeur "
                             "ne peut pas reproduire le problème.")
+        captures = self.env['nkezefuu.recette.echange']._lire_captures(captures)
 
         version = self.env['nkezefuu.recette.version']._ouvrir_correctif()
         cas = self._reprendre(version, 'regression')
@@ -444,19 +457,21 @@ class RecetteCas(models.Model):
             'dernier_acteur': 'tester',
             'tour': 1,
         })
-        cas._ajouter_echange(user, 'result', statut='regression', texte=constat)
+        cas._ajouter_echange(user, 'result', statut='regression', texte=constat, captures=captures)
         return cas
 
-    def commenter(self, user, texte):
+    def commenter(self, user, texte, captures=None):
         """Message libre, sans changer l'état : tous les profils."""
         self.ensure_one()
         if not user._recette_roles():
             raise AccessError("Ce compte n'a pas accès à la recette.")
         self._verifier_modifiable()
         texte = (texte or '').strip()
-        if not texte:
+        captures = self.env['nkezefuu.recette.echange']._lire_captures(captures)
+        # Une capture seule suffit : elle peut se passer d'explication
+        if not texte and not captures:
             raise UserError("Le commentaire est vide.")
-        self._ajouter_echange(user, 'comment', texte=texte)
+        self._ajouter_echange(user, 'comment', texte=texte or False, captures=captures)
         return self
 
     def modifier(self, user, vals):

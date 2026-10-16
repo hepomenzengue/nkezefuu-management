@@ -138,7 +138,15 @@ restent en français. Jeton Bearer, réponse HTTP 200 avec le vrai résultat dan
 | `POST /cases/{id}/result` | le testeur enregistre un résultat, ou l'administrateur de recette reporte le cas : `result`, `observed_result` (le motif pour un report) |
 | `POST /cases/{id}/regression` | le testeur signale la régression d'un cas conforme d'une version publiée : `observed_result` ; renvoie le nouveau cas |
 | `POST /cases/{id}/reply` | le développeur répond : `fix_status`, `reply` |
-| `POST /cases/{id}/comment` | message libre : `text` |
+| `POST /cases/{id}/comment` | message libre : `text`, ou seulement des `captures` |
+| `GET /captures/{id}` | l'image d'une capture jointe à un message (pas du JSON) |
+
+Les corps de `result`, `regression`, `reply` et `comment` acceptent aussi `captures` :
+liste de `{name, data}`, `data` en base64 (une URL `data:` est acceptée). Cinq au plus
+par message, 3 Mo au plus chacune, en PNG, JPEG ou WebP (type lu dans le contenu). Le
+site les réduit avant l'envoi. Elles sont stockées en pièces jointes de l'échange, ne se
+modifient pas et ne se suppriment pas. L'historique d'un cas liste les `captures` de
+chaque échange (`id`, `name`, `mimetype`), et chaque cas porte son `capture_count`.
 
 Codes des résultats : `not_tested`, `passed`, `passed_with_reserve`, `failed`, `blocked`,
 `not_implemented`, `passed_after_fix`, `still_failing`, `regression` (posé seulement par
