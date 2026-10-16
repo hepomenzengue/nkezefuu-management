@@ -9,6 +9,9 @@ from odoo.tools.mimetypes import guess_mimetype
 
 TYPES_ECHANGE = [
     ('result', 'Résultat du test'),
+    # Le testeur corrige le texte de son dernier résultat ou y joint des captures,
+    # sans changer le statut
+    ('amend', 'Modification du résultat'),
     ('reply', 'Réponse du développeur'),
     ('comment', 'Commentaire'),
     ('edit', 'Modification du cas'),

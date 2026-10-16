@@ -239,6 +239,7 @@ class RecetteCas(models.Model):
                 'can_restore': False,
                 'can_report_regression': bool(TESTEUR in roles and self.active and self.resultat in RESULTATS_OK
                                               and not self._regression_ouverte()),
+                'can_amend': False,
             }
         resultats, suites = [], []
         if self.active:
@@ -254,7 +255,16 @@ class RecetteCas(models.Model):
             'can_archive': ADMIN in roles and self.active,
             'can_restore': ADMIN in roles and not self.active,
             'can_report_regression': False,
+            'can_amend': bool(TESTEUR in roles and self._peut_modifier_resultat()),
         }
+
+    def _peut_modifier_resultat(self):
+        """Le dernier résultat est du testeur et le développeur n'y a pas encore
+        répondu : après une réponse, le testeur pose un nouveau résultat, sinon il
+        réécrirait ce à quoi le développeur a répondu."""
+        self.ensure_one()
+        return bool(self.active and self.dernier_acteur == 'tester'
+                    and self.resultat not in ('not_tested', 'postponed'))
 
     def _resultats_permis(self, roles):
         self.ensure_one()
@@ -459,6 +469,31 @@ class RecetteCas(models.Model):
         })
         cas._ajouter_echange(user, 'result', statut='regression', texte=constat, captures=captures)
         return cas
+
+    def modifier_resultat(self, user, constat, captures=None):
+        """Le testeur corrige le résultat observé de son dernier résultat, ou y joint
+        des captures oubliées. Le statut, l'itération et l'action attendue ne changent
+        pas ; l'historique garde l'ancien texte et trace la modification."""
+        self.ensure_one()
+        if TESTEUR not in user._recette_roles():
+            raise AccessError("Seul un testeur peut modifier un résultat.")
+        self._verifier_modifiable()
+        if not self._peut_modifier_resultat():
+            raise UserError("Ce résultat ne se modifie plus : le développeur a répondu, "
+                            "posez un nouveau résultat.")
+        constat = (constat or '').strip()
+        if self.resultat in RESULTATS_AVEC_CONSTAT and not constat:
+            raise UserError("Le résultat observé ne peut pas être vide pour ce statut.")
+        captures = self.env['nkezefuu.recette.echange']._lire_captures(captures)
+        change = constat != (self.constat or '')
+        if not change and not captures:
+            raise UserError("Rien à modifier : changez le texte ou joignez une capture.")
+
+        if change:
+            self.sudo().write({'constat': constat or False})
+        self._ajouter_echange(user, 'amend', statut=self.resultat, texte=constat if change else False,
+                              captures=captures)
+        return self
 
     def commenter(self, user, texte, captures=None):
         """Message libre, sans changer l'état : tous les profils."""

@@ -164,7 +164,7 @@ class RecetteController(SocleApi, http.Controller):
         return data
 
     def _serialize_echange(self, echange):
-        selection = RESULTATS if echange.type == 'result' else SUITES if echange.type == 'reply' else []
+        selection = RESULTATS if echange.type in ('result', 'amend') else SUITES if echange.type == 'reply' else []
         return {
             'id': echange.id,
             'iteration': echange.tour,
@@ -467,6 +467,15 @@ class RecetteController(SocleApi, http.Controller):
         def action(user, body):
             cas = self._get_cas(cas_id).poser_resultat(user, body.get('result'), body.get('observed_result'),
                                                             body.get('captures'))
+            return self._cas_complet(cas, user)
+        return self._run('POST', action, ecriture=True)
+
+    @http.route('/api/recette/cases/<int:cas_id>/amend', type='http', methods=['POST', 'OPTIONS'], auth="none", csrf=False)
+    def case_amend(self, cas_id, **kw):
+        """Le testeur modifie son dernier résultat sans changer le statut. Corps :
+        observed_result (le texte complet, qui remplace l'actuel), captures."""
+        def action(user, body):
+            cas = self._get_cas(cas_id).modifier_resultat(user, body.get('observed_result'), body.get('captures'))
             return self._cas_complet(cas, user)
         return self._run('POST', action, ecriture=True)
 

@@ -136,12 +136,13 @@ restent en français. Jeton Bearer, réponse HTTP 200 avec le vrai résultat dan
 | `POST /cases/{id}/update` | reformuler (`screen`, `user_profile`, `action`, `expected_result`) ou changer d'étape (`step_id`) (administrateur de recette) |
 | `POST /cases/{id}/archive`, `/restore` | archiver, restaurer (administrateur de recette) |
 | `POST /cases/{id}/result` | le testeur enregistre un résultat, ou l'administrateur de recette reporte le cas : `result`, `observed_result` (le motif pour un report) |
+| `POST /cases/{id}/amend` | le testeur modifie son dernier résultat, tant que le développeur n'a pas répondu, sans changer le statut : `observed_result` (texte complet), `captures` |
 | `POST /cases/{id}/regression` | le testeur signale la régression d'un cas conforme d'une version publiée : `observed_result` ; renvoie le nouveau cas |
 | `POST /cases/{id}/reply` | le développeur répond : `fix_status`, `reply` |
 | `POST /cases/{id}/comment` | message libre : `text`, ou seulement des `captures` |
 | `GET /captures/{id}` | l'image d'une capture jointe à un message (pas du JSON) |
 
-Les corps de `result`, `regression`, `reply` et `comment` acceptent aussi `captures` :
+Les corps de `result`, `amend`, `regression`, `reply` et `comment` acceptent aussi `captures` :
 liste de `{name, data}`, `data` en base64 (une URL `data:` est acceptée). Cinq au plus
 par message, 3 Mo au plus chacune, en PNG, JPEG ou WebP (type lu dans le contenu). Le
 site les réduit avant l'envoi. Elles sont stockées en pièces jointes de l'échange, ne se
