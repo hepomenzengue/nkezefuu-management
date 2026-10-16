@@ -564,3 +564,25 @@ class RecetteCas(models.Model):
         self.sudo().write({'active': True})
         self._ajouter_echange(user, 'restore')
         return self
+
+    @api.model
+    def _supprimer_cas_retires(self, xmlids):
+        """Supprime les cas retirés de recette_donnees.xml : ce fichier est en
+        noupdate, en retirer un cas ne le supprime pas des bases déjà installées.
+        Désignés par leur identifiant XML, jamais par leur référence, qu'un autre cas
+        pourrait reprendre. Les reprises d'un cas (report, régression) partent avec
+        lui, ainsi que tous les échanges et captures. Sans effet sur un cas déjà
+        supprimé : appelé à chaque mise à jour du module."""
+        cases = self.browse()
+        for xmlid in xmlids:
+            cases |= self.env.ref(f'nkezefuu_recette.{xmlid}', raise_if_not_found=False) or self.browse()
+        reprises = cases
+        while reprises:
+            reprises = self.with_context(active_test=False).search(
+                [('origine_id', 'in', reprises.ids), ('id', 'not in', cases.ids)])
+            cases |= reprises
+        # Les captures sont rattachées par res_id, sans suppression en cascade
+        echanges = cases.with_context(active_test=False).echange_ids
+        self.env['ir.attachment'].sudo().search([
+            ('res_model', '=', echanges._name), ('res_id', 'in', echanges.ids)]).unlink()
+        cases.sudo().unlink()

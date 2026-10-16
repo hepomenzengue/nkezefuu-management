@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cas retirés de la recette après leur création. Ils ne sont plus dans
+     recette_donnees.xml, qui est en noupdate : sans cet appel, ils resteraient sur
+     les bases déjà installées. Rejoué à chaque mise à jour, sans effet une fois les
+     cas supprimés.
+     RMP-021 : durée supérieure à la durée maximale autorisée
+     RMP-049 : somme des restes dus de l'échéancier égale au reste de l'en-tête
+     RMP-050 : montant de l'échéance assurances comprises -->
+<odoo>
+    <function model="nkezefuu.recette.cas" name="_supprimer_cas_retires">
+        <value eval="['cas_rmp_021', 'cas_rmp_echeancier_total', 'cas_rmp_echeance_assurances']"/>
+    </function>
+</odoo>

@@ -42,6 +42,7 @@ lui-même aucun accès au site.
         'data/documentation.xml',
         'data/recette_versions.xml',
         'data/recette_donnees.xml',
+        'data/recette_suppressions.xml',
     ],
     'installable': True,
     # Déclaré comme application pour rester visible dans la liste des Applications
