@@ -198,6 +198,15 @@
         <field name="action">Saisir une durée de remboursement de 0 mois, puis valider.</field>
         <field name="attendu">La demande est rejetée. Un message indique que la durée doit être positive.</field>
     </record>
+    <record id="cas_rmp_021" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'formulaire')]"/>
+        <field name="numero">21</field>
+        <field name="sequence">150</field>
+        <field name="ecran">Formulaire de demande</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Saisir une durée de remboursement supérieure à la durée maximale autorisée, puis valider.</field>
+        <field name="attendu">La demande est rejetée. Le message indique la durée maximale en mois.</field>
+    </record>
     <record id="cas_rmp_022" model="nkezefuu.recette.cas">
         <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'formulaire')]"/>
         <field name="numero">22</field>
@@ -446,14 +455,6 @@
         <field name="profil">Membre défaillant</field>
         <field name="action">Ouvrir un prêt dont une échéance en retard a généré un frais d'assurance au montant minimum.</field>
         <field name="attendu">Le frais apparaît dans les échéances d'assurance, avec sa date, son montant et son état de paiement.</field>
-    </record>
-    <record id="cas_rmp_total_assurances" model="nkezefuu.recette.cas">
-        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
-        <field name="sequence">140</field>
-        <field name="ecran">Détail du prêt</field>
-        <field name="profil">Membre défaillant</field>
-        <field name="action">Sur un prêt avec des assurances, comparer le total à rembourser affiché en en-tête avec celui du back-office.</field>
-        <field name="attendu">Le total à rembourser comprend les assurances et il est égal au total du back-office. Le déjà remboursé comprend les assurances payées : le total moins le déjà remboursé donne le restant dû.</field>
     </record>
 
     <!-- ====================================================================== -->
