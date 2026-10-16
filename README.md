@@ -91,7 +91,7 @@ Toutes les actions de recette se font sur le site, aucune dans Odoo :
 
 ## Cas de recette
 
-`data/recette_donnees.xml`, en `noupdate="1"` : 126 cas répartis sur 5 parcours
+`data/recette_donnees.xml`, en `noupdate="1"` : 132 cas répartis sur 5 parcours
 (références RMP, RLP, RMCB, RCB, RAP), qui forment la version 0.0.1.
 
 Le parcours « Autres parcours » (RAP) regroupe les fonctions de l'application qui

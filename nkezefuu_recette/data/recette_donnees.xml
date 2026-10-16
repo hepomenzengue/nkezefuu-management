@@ -421,6 +421,50 @@
         <field name="attendu">Le taux de remboursement augmente et le reste à payer diminue du montant de l'assurance payée.</field>
     </record>
 
+    <!-- L'échéancier reflète les paiements réels, échéance par échéance, et les
+         assurances lues sur les mêmes pièces que l'en-tête. Sans numéro : ils
+         prennent les suivants du parcours. -->
+    <record id="cas_rmp_echeancier_partiel" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">80</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Ouvrir un prêt dont une échéance n'a été payée qu'en partie.</field>
+        <field name="attendu">La ligne de cette échéance garde son montant. Son reste dû est égal au montant moins ce qui a été payé, et elle n'est pas marquée payée.</field>
+    </record>
+    <record id="cas_rmp_echeancier_ordre" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">90</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Ouvrir un prêt dont une échéance récente a été payée alors qu'une échéance plus ancienne ne l'est pas.</field>
+        <field name="attendu">Seule l'échéance réellement payée est marquée payée. L'échéance plus ancienne reste non payée, avec un reste dû égal à son montant.</field>
+    </record>
+    <record id="cas_rmp_echeancier_reconduction" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">100</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Ouvrir un prêt dont une échéance a été reconduite, avec des frais de reconduction.</field>
+        <field name="attendu">Les frais de reconduction sont compris dans le montant de l'échéance reconduite. L'échéancier ne compte pas de ligne en plus.</field>
+    </record>
+    <record id="cas_rmp_assurance_minimum" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">110</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre défaillant</field>
+        <field name="action">Ouvrir un prêt dont une échéance en retard a généré un frais d'assurance au montant minimum.</field>
+        <field name="attendu">Le frais apparaît dans les échéances d'assurance, avec sa date, son montant et son état de paiement.</field>
+    </record>
+    <record id="cas_rmp_echeancier_total" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">120</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre défaillant</field>
+        <field name="action">Sur un prêt en retard avec des assurances, additionner les restes dus de l'échéancier et les échéances d'assurance non payées.</field>
+        <field name="attendu">Le total est égal au reste à payer affiché en en-tête.</field>
+    </record>
+
     <!-- ====================================================================== -->
     <!-- Liste des prêts -->
     <!-- ====================================================================== -->
@@ -680,6 +724,14 @@
         <field name="profil">Gestionnaire</field>
         <field name="action">Ouvrir le détail d'un prêt depuis la liste des prêts.</field>
         <field name="attendu">Le détail affiche les avalistes, les bénéfices et les assurances du prêt.</field>
+    </record>
+    <record id="cas_rlp_echeancier_partiel" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Gestionnaire</field>
+        <field name="action">Ouvrir le détail du prêt d'un membre dont une échéance n'a été payée qu'en partie.</field>
+        <field name="attendu">La ligne de cette échéance garde son montant. Son reste dû est égal au montant moins ce qui a été payé, et elle n'est pas marquée payée.</field>
     </record>
 
     <!-- Demander un nouveau prêt depuis le détail -->

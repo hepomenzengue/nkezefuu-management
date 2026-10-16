@@ -179,11 +179,11 @@
         },
         {
          "label": "Échéancier",
-         "apiVariable": "repayment_schedule[] : date, montant, capital, intérêts, reste dû, payé"
+         "apiVariable": "repayment_schedule[] : date, montant, capital, intérêts, reste dû, payé (paiements réels, échéance par échéance)"
         },
         {
          "label": "Échéances d'assurance",
-         "apiVariable": "insurance_schedule[] : date, montant, payé"
+         "apiVariable": "insurance_schedule[] : date, montant, payé (frais de retard, lus sur les pièces d'assurance)"
         }
        ],
        "note": "Aucune facture, aucun numéro côté membre : c'est un échéancier, pas une liste de factures."
@@ -317,7 +317,7 @@
      "titre": "Prêt partiellement remboursé",
      "etant_donne": "Une échéance réglée en deux paiements partiels",
      "quand": "GET member-loans/{id}",
-     "alors": "L'échéancier garde une entrée par mois (pas une par paiement) ; paid = true seulement si le cumul payé couvre le cumul dû.",
+     "alors": "L'échéancier garde une entrée par mois (pas une par paiement) ; remaining_amount de l'échéance diminue de chaque paiement, paid = true seulement quand elle est soldée.",
      "attendu": {
       "customstatus": 200
      }

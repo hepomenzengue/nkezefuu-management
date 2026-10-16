@@ -2575,7 +2575,7 @@
    "enveloppe": false,
    "usage": "Écran de détail d'un prêt dans 'Mes prêts'.",
    "notes": [
-    "repayment_schedule reproduit le plan d'origine : les dates sont les échéances prevues, pas les dates de paiement.",
+    "repayment_schedule reflète les paiements réels : un paiement partiel réduit remaining_amount de l'échéance concernée, et paid ne passe à true que lorsque cette échéance est soldée.",
     "Sur un prêt validated, l'échéancier est déjà connu : le bouton 'Simuler' n'à plus de raison d'apparaître.",
     "Pas de profit, guarantors ni insurance_invoices ici : ces champs sont réservés à la vue gestionnaire (all-loans/{loan_id})."
    ],
@@ -2619,14 +2619,27 @@
          "capital": 50000,
          "interest": 5000,
          "remaining_amount": 0,
-         "paid": true
+         "paid": true,
+         "paid_amount": 55000,
+         "status": {
+          "code": "paid",
+          "label": "Payée"
+         },
+         "payments": [
+          {
+           "date": "2025-10-18",
+           "amount": 55000
+          }
+         ]
         }
        ],
        "insurance_schedule": [
         {
          "date_maturity": "2025-10-18",
          "amount": 5000,
-         "paid": false
+         "paid": false,
+         "paid_amount": 0,
+         "remaining_amount": 5000
         }
        ]
       },
@@ -2724,62 +2737,87 @@
     {
      "name": "loan.repayment_percentage",
      "type": "number (0-100)",
-     "description": "Progression du remboursement, capital + intérêts uniquement (hors assurance). Même formule que le badge du back-office."
+     "description": "Progression du remboursement, assurances comprises : (payé + assurances payées) / (total + assurances). Même formule que le back-office."
     },
     {
      "name": "loan.repayment_schedule[]",
      "type": "array",
-     "description": "Échéancier prévisionnel, une entrée par mois. Rejoue le calcul d'origine du prêt (mêmes paramètres, jamais modifiés après validation). Vide tant que state != validated."
+     "description": "Échéancier réel, une entrée par échéance, lu sur les pièces comptables comme l'en-tête (et non rejoué depuis la simulation, dont les pièces s'écartent : prêts importés, reconductions, montants modifiés). Hors assurance : les frais d'assurance sont dans insurance_schedule. Vide tant que state != validated."
     },
     {
      "name": "loan.repayment_schedule[].date_maturity",
      "type": "string (YYYY-MM-DD)",
-     "description": "Date d'échéance prévue (pas la date du paiement effectif)."
+     "description": "Date d'échéance d'origine (pas la date du paiement effectif, voir payments)."
     },
     {
      "name": "loan.repayment_schedule[].amount",
      "type": "number",
-     "description": "Montant total de l'échéance (capital + intérêts)."
+     "description": "Montant réel de l'échéance hors assurance, frais de reconduction compris."
     },
     {
      "name": "loan.repayment_schedule[].capital",
      "type": "number",
-     "description": "Part de capital de l'échéance."
+     "description": "Part de capital de l'échéance, d'après la simulation à la même date ; 0 si l'échéance n'y figure pas (prêt importé ou modifié)."
     },
     {
      "name": "loan.repayment_schedule[].interest",
      "type": "number",
-     "description": "Part d'intérêts de l'échéance."
+     "description": "Part d'intérêts de l'échéance, d'après la simulation à la même date ; 0 si l'échéance n'y figure pas."
     },
     {
      "name": "loan.repayment_schedule[].remaining_amount",
      "type": "number",
-     "description": "Capital restant du après cette échéance (solde du tableau d'amortissement)."
+     "description": "Reste à payer sur cette échéance : amount moins ce qui a déjà été payé."
     },
     {
      "name": "loan.repayment_schedule[].paid",
      "type": "boolean",
-     "description": "true si le cumul réellement paye couvre le cumul du jusqu'a cette échéance incluse. Reste cohérent même si une échéance a été réglée en plusieurs fois."
+     "description": "true seulement si cette échéance est entièrement payée. Un paiement fait sur une autre échéance ne la marque pas payée."
+    },
+    {
+     "name": "loan.repayment_schedule[].paid_amount",
+     "type": "number",
+     "description": "Ce qui a déjà été payé sur cette échéance (paiements partiels cumulés)."
+    },
+    {
+     "name": "loan.repayment_schedule[].status",
+     "type": "object {code, label}",
+     "description": "État de l'échéance : paid (Payée), partial (Partiellement payée), partial_late (Partielle, en retard), late (En retard), upcoming (À venir). En retard : date d'échéance passée et reste à payer."
+    },
+    {
+     "name": "loan.repayment_schedule[].payments[]",
+     "type": "array {date, amount}",
+     "description": "Paiements reçus sur cette échéance, regroupés par date de paiement."
     },
     {
      "name": "loan.insurance_schedule[]",
      "type": "array",
-     "description": "Échéances d'assurance (une par facture d'assurance postée), sans les identifiants de facture."
+     "description": "Frais d'assurance du prêt, une entrée par pièce d'assurance. L'assurance est un frais de retard : créée quand une échéance reste impayée après sa date de contrôle, puis chaque mois tant qu'elle l'est. Lue sur les pièces comme l'en-tête, frais au minimum de 1 000 compris (ils n'ont pas de facture). La somme des remaining_amount des deux listes égale loan.remaining_amount."
     },
     {
      "name": "loan.insurance_schedule[].date_maturity",
      "type": "string (YYYY-MM-DD)",
-     "description": "Date d'échéance de la facture d'assurance."
+     "description": "Date d'échéance du frais d'assurance."
     },
     {
      "name": "loan.insurance_schedule[].amount",
      "type": "number",
-     "description": "Montant de la facture."
+     "description": "Montant du frais."
     },
     {
      "name": "loan.insurance_schedule[].paid",
      "type": "boolean",
-     "description": "Calcule à partir des lignes de reglement réellement liées (fiable), pas du payment_state natif d'Odoo."
+     "description": "true si le frais est entièrement payé."
+    },
+    {
+     "name": "loan.insurance_schedule[].paid_amount",
+     "type": "number",
+     "description": "Ce qui a déjà été payé sur ce frais."
+    },
+    {
+     "name": "loan.insurance_schedule[].remaining_amount",
+     "type": "number",
+     "description": "Reste à payer sur ce frais."
     },
     {
      "name": "status",
@@ -3211,6 +3249,7 @@
    "enveloppe": false,
    "usage": "Détail d'un prêt depuis 'Liste des prêts'.",
    "notes": [
+    "repayment_schedule reflète les paiements réels : un paiement partiel réduit remaining_amount de l'échéance concernée, et paid ne passe à true que lorsque cette échéance est soldée.",
     "Depuis cet écran, le bouton 'Creer un nouveau prêt pour ce membre' peut enchainer directement sur le formulaire : loan.borrower_id est le user_id à réutiliser, sans repasser par le picker.",
     "Même dans ce cas, la soumission passe par request-loan-for-member (pas request-loan) : le demandeur reste un tiers du point de vue du serveur."
    ],
@@ -3254,7 +3293,18 @@
          "capital": 15000,
          "interest": 1500,
          "remaining_amount": 0,
-         "paid": true
+         "paid": true,
+         "paid_amount": 16500,
+         "status": {
+          "code": "paid",
+          "label": "Payée"
+         },
+         "payments": [
+          {
+           "date": "2025-11-20",
+           "amount": 16500
+          }
+         ]
         }
        ],
        "profit": 3000,
@@ -3368,42 +3418,57 @@
     {
      "name": "loan.repayment_percentage",
      "type": "number (0-100)",
-     "description": "Progression du remboursement, capital + intérêts uniquement (hors assurance). Même formule que le badge du back-office."
+     "description": "Progression du remboursement, assurances comprises : (payé + assurances payées) / (total + assurances). Même formule que le back-office."
     },
     {
      "name": "loan.repayment_schedule[]",
      "type": "array",
-     "description": "Échéancier prévisionnel, une entrée par mois. Rejoue le calcul d'origine du prêt (mêmes paramètres, jamais modifiés après validation). Vide tant que state != validated."
+     "description": "Échéancier réel, une entrée par échéance, lu sur les pièces comptables comme l'en-tête (et non rejoué depuis la simulation, dont les pièces s'écartent : prêts importés, reconductions, montants modifiés). Hors assurance : les frais d'assurance sont dans insurance_schedule. Vide tant que state != validated."
     },
     {
      "name": "loan.repayment_schedule[].date_maturity",
      "type": "string (YYYY-MM-DD)",
-     "description": "Date d'échéance prévue (pas la date du paiement effectif)."
+     "description": "Date d'échéance d'origine (pas la date du paiement effectif, voir payments)."
     },
     {
      "name": "loan.repayment_schedule[].amount",
      "type": "number",
-     "description": "Montant total de l'échéance (capital + intérêts)."
+     "description": "Montant réel de l'échéance hors assurance, frais de reconduction compris."
     },
     {
      "name": "loan.repayment_schedule[].capital",
      "type": "number",
-     "description": "Part de capital de l'échéance."
+     "description": "Part de capital de l'échéance, d'après la simulation à la même date ; 0 si l'échéance n'y figure pas (prêt importé ou modifié)."
     },
     {
      "name": "loan.repayment_schedule[].interest",
      "type": "number",
-     "description": "Part d'intérêts de l'échéance."
+     "description": "Part d'intérêts de l'échéance, d'après la simulation à la même date ; 0 si l'échéance n'y figure pas."
     },
     {
      "name": "loan.repayment_schedule[].remaining_amount",
      "type": "number",
-     "description": "Capital restant du après cette échéance (solde du tableau d'amortissement)."
+     "description": "Reste à payer sur cette échéance : amount moins ce qui a déjà été payé."
     },
     {
      "name": "loan.repayment_schedule[].paid",
      "type": "boolean",
-     "description": "true si le cumul réellement paye couvre le cumul du jusqu'a cette échéance incluse. Reste cohérent même si une échéance a été réglée en plusieurs fois."
+     "description": "true seulement si cette échéance est entièrement payée. Un paiement fait sur une autre échéance ne la marque pas payée."
+    },
+    {
+     "name": "loan.repayment_schedule[].paid_amount",
+     "type": "number",
+     "description": "Ce qui a déjà été payé sur cette échéance (paiements partiels cumulés)."
+    },
+    {
+     "name": "loan.repayment_schedule[].status",
+     "type": "object {code, label}",
+     "description": "État de l'échéance : paid (Payée), partial (Partiellement payée), partial_late (Partielle, en retard), late (En retard), upcoming (À venir). En retard : date d'échéance passée et reste à payer."
+    },
+    {
+     "name": "loan.repayment_schedule[].payments[]",
+     "type": "array {date, amount}",
+     "description": "Paiements reçus sur cette échéance, regroupés par date de paiement."
     },
     {
      "name": "loan.profit",
