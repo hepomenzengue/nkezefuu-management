@@ -162,11 +162,11 @@
          "apiVariable": "requested_loan_amount"
         },
         {
-         "label": "Total à rembourser (hors assurance)",
+         "label": "Total à rembourser (assurances comprises)",
          "apiVariable": "total_repayment_amount"
         },
         {
-         "label": "Déjà payé",
+         "label": "Déjà payé (assurances payées comprises)",
          "apiVariable": "total_paid_amount"
         },
         {
@@ -179,11 +179,11 @@
         },
         {
          "label": "Échéancier",
-         "apiVariable": "repayment_schedule[] : date, montant, capital, intérêts, reste dû, payé (paiements réels, échéance par échéance)"
+         "apiVariable": "repayment_schedule[] : date, montant (assurances de l'échéance comprises), capital, intérêts, reste dû, payé (paiements réels, échéance par échéance)"
         },
         {
          "label": "Échéances d'assurance",
-         "apiVariable": "insurance_schedule[] : date, montant, payé (frais de retard, lus sur les pièces d'assurance)"
+         "apiVariable": "insurance_schedule[] : date, montant, payé (frais de retard, lus sur les pièces d'assurance ; détail des montants déjà compris dans l'échéancier)"
         }
        ],
        "note": "Aucune facture, aucun numéro côté membre : c'est un échéancier, pas une liste de factures."
@@ -306,7 +306,7 @@
      "titre": "Prêt validé, non remboursé",
      "etant_donne": "Prêt validated sans paiement",
      "quand": "GET member-loans/{id}",
-     "alors": "total_paid_amount = 0, repayment_percentage = 0, chaque échéance paid = false, remaining_amount = total_repayment_amount + assurance restante.",
+     "alors": "total_paid_amount = 0, repayment_percentage = 0, chaque échéance paid = false, remaining_amount = total_repayment_amount (assurances comprises).",
      "attendu": {
       "customstatus": 200
      }
@@ -326,9 +326,9 @@
      "code": "MP-11",
      "contrainte": false,
      "titre": "Prêt totalement remboursé",
-     "etant_donne": "Prêt validated entièrement payé",
+     "etant_donne": "Prêt validated entièrement payé, assurances comprises",
      "quand": "GET member-loans/{id}",
-     "alors": "repayment_percentage = 100, toutes les échéances paid = true, remaining_amount = assurance restante uniquement.",
+     "alors": "repayment_percentage = 100, toutes les échéances paid = true, remaining_amount = 0.",
      "attendu": {
       "customstatus": 200
      }
@@ -362,7 +362,7 @@
      "titre": "Prêt avec assurance",
      "etant_donne": "Prêt ayant des factures d'assurance postées",
      "quand": "GET member-loans/{id}",
-     "alors": "insurance_schedule renseigné (date, montant, paid), total_insurance_amount > 0 ; pas de insurance_invoices ni profit.",
+     "alors": "insurance_schedule renseigné (date, montant, paid), total_insurance_amount > 0 ; l'échéance concernée comprend le frais dans amount (insurance_amount) et total_repayment_amount le comprend aussi ; pas de insurance_invoices ni profit.",
      "attendu": {
       "customstatus": 200
      }

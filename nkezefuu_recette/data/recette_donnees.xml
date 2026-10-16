@@ -381,8 +381,8 @@
         <field name="sequence">30</field>
         <field name="ecran">Détail du prêt</field>
         <field name="profil">Membre en règle</field>
-        <field name="action">Ouvrir un prêt entièrement remboursé.</field>
-        <field name="attendu">Le taux de remboursement est de 100 %. Toutes les échéances sont marquées payées. Le reste à payer ne comprend plus que l'assurance éventuellement due.</field>
+        <field name="action">Ouvrir un prêt entièrement remboursé, assurances comprises.</field>
+        <field name="attendu">Le taux de remboursement est de 100 %. Toutes les échéances sont marquées payées et le reste à payer est à zéro.</field>
     </record>
     <record id="cas_rmp_041" model="nkezefuu.recette.cas">
         <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
@@ -461,8 +461,24 @@
         <field name="sequence">120</field>
         <field name="ecran">Détail du prêt</field>
         <field name="profil">Membre défaillant</field>
-        <field name="action">Sur un prêt en retard avec des assurances, additionner les restes dus de l'échéancier et les échéances d'assurance non payées.</field>
-        <field name="attendu">Le total est égal au reste à payer affiché en en-tête.</field>
+        <field name="action">Sur un prêt en retard avec des assurances, additionner les restes dus de l'échéancier.</field>
+        <field name="attendu">Le total est égal au reste à payer affiché en en-tête. Les assurances, déjà comprises dans les échéances, ne sont pas comptées une seconde fois.</field>
+    </record>
+    <record id="cas_rmp_echeance_assurances" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">130</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre défaillant</field>
+        <field name="action">Ouvrir un prêt dont une échéance en retard a généré des frais d'assurance, puis comparer cette échéance avec l'échéancier du prêt dans le back-office.</field>
+        <field name="attendu">Le montant de l'échéance comprend ses frais d'assurance et il est égal au montant dû du back-office. Son reste dû comprend aussi les assurances non payées. L'onglet Assurances en garde le détail.</field>
+    </record>
+    <record id="cas_rmp_total_assurances" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-prets'), ('cle', '=', 'detail')]"/>
+        <field name="sequence">140</field>
+        <field name="ecran">Détail du prêt</field>
+        <field name="profil">Membre défaillant</field>
+        <field name="action">Sur un prêt avec des assurances, comparer le total à rembourser affiché en en-tête avec celui du back-office.</field>
+        <field name="attendu">Le total à rembourser comprend les assurances et il est égal au total du back-office. Le déjà remboursé comprend les assurances payées : le total moins le déjà remboursé donne le restant dû.</field>
     </record>
 
     <!-- ====================================================================== -->

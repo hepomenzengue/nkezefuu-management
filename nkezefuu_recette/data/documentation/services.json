@@ -2575,7 +2575,7 @@
    "enveloppe": false,
    "usage": "Écran de détail d'un prêt dans 'Mes prêts'.",
    "notes": [
-    "repayment_schedule reflète les paiements réels : un paiement partiel réduit remaining_amount de l'échéance concernée, et paid ne passe à true que lorsque cette échéance est soldée.",
+    "repayment_schedule reflète les paiements réels et comprend les assurances : chaque échéance montre le même montant que l'échéancier du back-office. Un paiement partiel réduit remaining_amount de l'échéance concernée, et paid ne passe à true que lorsque cette échéance est soldée, assurances comprises.",
     "Sur un prêt validated, l'échéancier est déjà connu : le bouton 'Simuler' n'à plus de raison d'apparaître.",
     "Pas de profit, guarantors ni insurance_invoices ici : ces champs sont réservés à la vue gestionnaire (all-loans/{loan_id})."
    ],
@@ -2586,60 +2586,78 @@
      "type": "number",
      "required": true,
      "description": "Identifiant du prêt (loans[].id). Doit appartenir au membre connecté, sinon 404.",
-     "example": "964"
+     "example": "1034"
     }
    ],
-   "exemple_requete": "GET /api/auth/member-loans/964\nAuthorization: Bearer <token>",
+   "exemple_requete": "GET /api/auth/member-loans/1034\nAuthorization: Bearer <token>",
    "exemples_succes": [
     {
      "body": {
       "loan": {
-       "id": 964,
-       "code": "Prêt0119",
+       "id": 1034,
+       "code": "Prêt0189",
        "state": "validated",
-       "borrower": "DJIENA FANKAM Léonel",
-       "borrower_id": 53,
-       "requested_loan_reason": "Besoin argent",
-       "requested_loan_amount": 50000,
+       "borrower": "MBONKI EWANE Rody",
+       "borrower_id": 25,
+       "requested_loan_reason": "motif",
+       "requested_loan_amount": 75000,
        "interest_rate": 10,
-       "repayment_duration_months": 1,
+       "repayment_duration_months": 2,
        "deferment_type": "none",
        "deferment_period": 0,
-       "loan_request_date": "2025-09-18",
-       "total_repayment_amount": 55000,
-       "total_paid_amount": 55000,
-       "total_insurance_amount": 5000,
+       "loan_request_date": "2026-08-03",
+       "total_repayment_amount": 94875,
+       "total_paid_amount": 0,
+       "total_insurance_amount": 8625,
        "total_insurance_paid_amount": 0,
-       "remaining_amount": 5000,
-       "repayment_percentage": 100,
+       "remaining_amount": 94875,
+       "repayment_percentage": 0,
        "repayment_schedule": [
         {
-         "date_maturity": "2025-10-18",
-         "amount": 55000,
-         "capital": 50000,
-         "interest": 5000,
-         "remaining_amount": 0,
-         "paid": true,
-         "paid_amount": 55000,
+         "date_maturity": "2026-09-03",
+         "amount": 49500,
+         "insurance_amount": 4500,
+         "capital": 37500,
+         "interest": 7500,
+         "remaining_amount": 49500,
+         "paid": false,
+         "paid_amount": 0,
          "status": {
-          "code": "paid",
-          "label": "Payée"
+          "code": "late",
+          "label": "En retard"
          },
-         "payments": [
-          {
-           "date": "2025-10-18",
-           "amount": 55000
-          }
-         ]
+         "payments": []
+        },
+        {
+         "date_maturity": "2026-10-03",
+         "amount": 45375,
+         "insurance_amount": 4125,
+         "capital": 37500,
+         "interest": 3750,
+         "remaining_amount": 45375,
+         "paid": false,
+         "paid_amount": 0,
+         "status": {
+          "code": "late",
+          "label": "En retard"
+         },
+         "payments": []
         }
        ],
        "insurance_schedule": [
         {
-         "date_maturity": "2025-10-18",
-         "amount": 5000,
+         "date_maturity": "2026-09-03",
+         "amount": 4500,
          "paid": false,
          "paid_amount": 0,
-         "remaining_amount": 5000
+         "remaining_amount": 4500
+        },
+        {
+         "date_maturity": "2026-10-03",
+         "amount": 4125,
+         "paid": false,
+         "paid_amount": 0,
+         "remaining_amount": 4125
         }
        ]
       },
@@ -2712,12 +2730,12 @@
     {
      "name": "loan.total_repayment_amount",
      "type": "number",
-     "description": "Somme de toutes les échéances (capital + intérêts), payées ou non. 0 tant que le prêt n'est pas validated."
+     "description": "Total à rembourser, assurances comprises : somme des échéances (capital + intérêts) plus total_insurance_amount, payées ou non. Même montant que « Total à rembourser » au back-office. 0 tant que le prêt n'est pas validated."
     },
     {
      "name": "loan.total_paid_amount",
      "type": "number",
-     "description": "Somme des échéances déjà réglées (lignes passées du compte d'attente au compte du membre)."
+     "description": "Déjà remboursé, assurances payées comprises (lignes passées du compte d'attente au compte du membre). total_repayment_amount - total_paid_amount = remaining_amount."
     },
     {
      "name": "loan.total_insurance_amount",
@@ -2732,7 +2750,7 @@
     {
      "name": "loan.remaining_amount",
      "type": "number",
-     "description": "Reste réellement à payer = (remboursement - payé) + (assurance - assurance payée)."
+     "description": "Reste réellement à payer = total_repayment_amount - total_paid_amount, assurances comprises."
     },
     {
      "name": "loan.repayment_percentage",
@@ -2742,7 +2760,7 @@
     {
      "name": "loan.repayment_schedule[]",
      "type": "array",
-     "description": "Échéancier réel, une entrée par échéance, lu sur les pièces comptables comme l'en-tête (et non rejoué depuis la simulation, dont les pièces s'écartent : prêts importés, reconductions, montants modifiés). Hors assurance : les frais d'assurance sont dans insurance_schedule. Vide tant que state != validated."
+     "description": "Échéancier réel, une entrée par échéance, lu sur les pièces comptables comme l'en-tête (et non rejoué depuis la simulation, dont les pièces s'écartent : prêts importés, reconductions, montants modifiés). Mêmes montants que l'échéancier du back-office : chaque échéance comprend ses frais d'assurance. Vide tant que state != validated."
     },
     {
      "name": "loan.repayment_schedule[].date_maturity",
@@ -2752,7 +2770,12 @@
     {
      "name": "loan.repayment_schedule[].amount",
      "type": "number",
-     "description": "Montant réel de l'échéance hors assurance, frais de reconduction compris."
+     "description": "Montant réel de l'échéance, frais de reconduction et frais d'assurance de l'échéance compris. Peut dépasser capital + interest : l'écart est insurance_amount."
+    },
+    {
+     "name": "loan.repayment_schedule[].insurance_amount",
+     "type": "number",
+     "description": "Part des frais d'assurance comprise dans amount ; 0 si l'échéance n'en a pas généré."
     },
     {
      "name": "loan.repayment_schedule[].capital",
@@ -2767,17 +2790,17 @@
     {
      "name": "loan.repayment_schedule[].remaining_amount",
      "type": "number",
-     "description": "Reste à payer sur cette échéance : amount moins ce qui a déjà été payé."
+     "description": "Reste à payer sur cette échéance, assurances comprises : amount moins ce qui a déjà été payé."
     },
     {
      "name": "loan.repayment_schedule[].paid",
      "type": "boolean",
-     "description": "true seulement si cette échéance est entièrement payée. Un paiement fait sur une autre échéance ne la marque pas payée."
+     "description": "true seulement si cette échéance est entièrement payée, assurances comprises. Un paiement fait sur une autre échéance ne la marque pas payée."
     },
     {
      "name": "loan.repayment_schedule[].paid_amount",
      "type": "number",
-     "description": "Ce qui a déjà été payé sur cette échéance (paiements partiels cumulés)."
+     "description": "Ce qui a déjà été payé sur cette échéance, assurances comprises (paiements partiels cumulés)."
     },
     {
      "name": "loan.repayment_schedule[].status",
@@ -2792,7 +2815,7 @@
     {
      "name": "loan.insurance_schedule[]",
      "type": "array",
-     "description": "Frais d'assurance du prêt, une entrée par pièce d'assurance. L'assurance est un frais de retard : créée quand une échéance reste impayée après sa date de contrôle, puis chaque mois tant qu'elle l'est. Lue sur les pièces comme l'en-tête, frais au minimum de 1 000 compris (ils n'ont pas de facture). La somme des remaining_amount des deux listes égale loan.remaining_amount."
+     "description": "Détail des frais d'assurance du prêt, une entrée par pièce d'assurance. L'assurance est un frais de retard : créée quand une échéance reste impayée après sa date de contrôle, puis chaque mois tant qu'elle l'est. Lue sur les pièces comme l'en-tête, frais au minimum de 1 000 compris (ils n'ont pas de facture). Ces frais sont déjà compris dans le montant de l'échéance qu'ils concernent (repayment_schedule[].insurance_amount) : ne pas les additionner une seconde fois."
     },
     {
      "name": "loan.insurance_schedule[].date_maturity",
@@ -3249,7 +3272,7 @@
    "enveloppe": false,
    "usage": "Détail d'un prêt depuis 'Liste des prêts'.",
    "notes": [
-    "repayment_schedule reflète les paiements réels : un paiement partiel réduit remaining_amount de l'échéance concernée, et paid ne passe à true que lorsque cette échéance est soldée.",
+    "repayment_schedule reflète les paiements réels et comprend les assurances : chaque échéance montre le même montant que l'échéancier du back-office. Un paiement partiel réduit remaining_amount de l'échéance concernée, et paid ne passe à true que lorsque cette échéance est soldée, assurances comprises.",
     "Depuis cet écran, le bouton 'Creer un nouveau prêt pour ce membre' peut enchainer directement sur le formulaire : loan.borrower_id est le user_id à réutiliser, sans repasser par le picker.",
     "Même dans ce cas, la soumission passe par request-loan-for-member (pas request-loan) : le demandeur reste un tiers du point de vue du serveur."
    ],
@@ -3280,24 +3303,25 @@
        "deferment_type": "none",
        "deferment_period": 0,
        "loan_request_date": "2025-10-20",
-       "total_repayment_amount": 16500,
+       "total_repayment_amount": 18000,
        "total_paid_amount": 16500,
        "total_insurance_amount": 1500,
        "total_insurance_paid_amount": 0,
        "remaining_amount": 1500,
-       "repayment_percentage": 100,
+       "repayment_percentage": 91.67,
        "repayment_schedule": [
         {
          "date_maturity": "2025-11-20",
-         "amount": 16500,
+         "amount": 18000,
+         "insurance_amount": 1500,
          "capital": 15000,
          "interest": 1500,
-         "remaining_amount": 0,
-         "paid": true,
+         "remaining_amount": 1500,
+         "paid": false,
          "paid_amount": 16500,
          "status": {
-          "code": "paid",
-          "label": "Payée"
+          "code": "late",
+          "label": "En retard"
          },
          "payments": [
           {
@@ -3393,12 +3417,12 @@
     {
      "name": "loan.total_repayment_amount",
      "type": "number",
-     "description": "Somme de toutes les échéances (capital + intérêts), payées ou non. 0 tant que le prêt n'est pas validated."
+     "description": "Total à rembourser, assurances comprises : somme des échéances (capital + intérêts) plus total_insurance_amount, payées ou non. Même montant que « Total à rembourser » au back-office. 0 tant que le prêt n'est pas validated."
     },
     {
      "name": "loan.total_paid_amount",
      "type": "number",
-     "description": "Somme des échéances déjà réglées (lignes passées du compte d'attente au compte du membre)."
+     "description": "Déjà remboursé, assurances payées comprises (lignes passées du compte d'attente au compte du membre). total_repayment_amount - total_paid_amount = remaining_amount."
     },
     {
      "name": "loan.total_insurance_amount",
@@ -3413,7 +3437,7 @@
     {
      "name": "loan.remaining_amount",
      "type": "number",
-     "description": "Reste réellement à payer = (remboursement - payé) + (assurance - assurance payée)."
+     "description": "Reste réellement à payer = total_repayment_amount - total_paid_amount, assurances comprises."
     },
     {
      "name": "loan.repayment_percentage",
@@ -3423,7 +3447,7 @@
     {
      "name": "loan.repayment_schedule[]",
      "type": "array",
-     "description": "Échéancier réel, une entrée par échéance, lu sur les pièces comptables comme l'en-tête (et non rejoué depuis la simulation, dont les pièces s'écartent : prêts importés, reconductions, montants modifiés). Hors assurance : les frais d'assurance sont dans insurance_schedule. Vide tant que state != validated."
+     "description": "Échéancier réel, une entrée par échéance, lu sur les pièces comptables comme l'en-tête (et non rejoué depuis la simulation, dont les pièces s'écartent : prêts importés, reconductions, montants modifiés). Mêmes montants que l'échéancier du back-office : chaque échéance comprend ses frais d'assurance. Vide tant que state != validated."
     },
     {
      "name": "loan.repayment_schedule[].date_maturity",
@@ -3433,7 +3457,12 @@
     {
      "name": "loan.repayment_schedule[].amount",
      "type": "number",
-     "description": "Montant réel de l'échéance hors assurance, frais de reconduction compris."
+     "description": "Montant réel de l'échéance, frais de reconduction et frais d'assurance de l'échéance compris. Peut dépasser capital + interest : l'écart est insurance_amount."
+    },
+    {
+     "name": "loan.repayment_schedule[].insurance_amount",
+     "type": "number",
+     "description": "Part des frais d'assurance comprise dans amount ; 0 si l'échéance n'en a pas généré."
     },
     {
      "name": "loan.repayment_schedule[].capital",
@@ -3448,17 +3477,17 @@
     {
      "name": "loan.repayment_schedule[].remaining_amount",
      "type": "number",
-     "description": "Reste à payer sur cette échéance : amount moins ce qui a déjà été payé."
+     "description": "Reste à payer sur cette échéance, assurances comprises : amount moins ce qui a déjà été payé."
     },
     {
      "name": "loan.repayment_schedule[].paid",
      "type": "boolean",
-     "description": "true seulement si cette échéance est entièrement payée. Un paiement fait sur une autre échéance ne la marque pas payée."
+     "description": "true seulement si cette échéance est entièrement payée, assurances comprises. Un paiement fait sur une autre échéance ne la marque pas payée."
     },
     {
      "name": "loan.repayment_schedule[].paid_amount",
      "type": "number",
-     "description": "Ce qui a déjà été payé sur cette échéance (paiements partiels cumulés)."
+     "description": "Ce qui a déjà été payé sur cette échéance, assurances comprises (paiements partiels cumulés)."
     },
     {
      "name": "loan.repayment_schedule[].status",
