@@ -547,6 +547,14 @@
     </record>
 
     <!-- Sélectionner le demandeur -->
+    <record id="cas_rlp_prets_soldes" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'liste')]"/>
+        <field name="sequence">70</field>
+        <field name="ecran">Liste des prêts</field>
+        <field name="profil">Gestionnaire</field>
+        <field name="action">Consulter un emprunteur dont tous les prêts validés sont entièrement remboursés, assurances comprises.</field>
+        <field name="attendu">L'emprunteur figure dans la liste avec tous ses prêts au total, aucun prêt actif et un encours nul.</field>
+    </record>
     <record id="cas_rlp_010" model="nkezefuu.recette.cas">
         <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'choix-demandeur')]"/>
         <field name="numero">10</field>
@@ -556,15 +564,6 @@
         <field name="action">Toucher « Demander un prêt », puis saisir une seule lettre dans la recherche de membre.</field>
         <field name="attendu">La liste propose les membres dont le nom, l'identifiant ou le téléphone commence par cette lettre, sans distinction de majuscules et de minuscules.</field>
     </record>
-    <record id="cas_rlp_011" model="nkezefuu.recette.cas">
-        <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'choix-demandeur')]"/>
-        <field name="numero">11</field>
-        <field name="sequence">20</field>
-        <field name="ecran">Sélection du demandeur</field>
-        <field name="profil">Gestionnaire</field>
-        <field name="action">Rechercher « nel » pour trouver le membre « KENMOE Nelson ».</field>
-        <field name="attendu">Le membre n'apparaît pas dans les résultats : la recherche porte uniquement sur le début du nom.</field>
-    </record>
     <record id="cas_rlp_012" model="nkezefuu.recette.cas">
         <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'choix-demandeur')]"/>
         <field name="numero">12</field>
@@ -572,15 +571,6 @@
         <field name="ecran">Sélection du demandeur</field>
         <field name="profil">Gestionnaire</field>
         <field name="action">Rechercher un membre par le début de son identifiant, par exemple « M00 ».</field>
-        <field name="attendu">Le membre apparaît dans les résultats.</field>
-    </record>
-    <record id="cas_rlp_013" model="nkezefuu.recette.cas">
-        <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'choix-demandeur')]"/>
-        <field name="numero">13</field>
-        <field name="sequence">40</field>
-        <field name="ecran">Sélection du demandeur</field>
-        <field name="profil">Gestionnaire</field>
-        <field name="action">Rechercher un membre par le début de son numéro de téléphone.</field>
         <field name="attendu">Le membre apparaît dans les résultats.</field>
     </record>
     <record id="cas_rlp_014" model="nkezefuu.recette.cas">

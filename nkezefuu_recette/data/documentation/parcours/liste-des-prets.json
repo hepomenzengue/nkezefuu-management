@@ -468,6 +468,17 @@
      }
     },
     {
+     "code": "LP-63",
+     "contrainte": false,
+     "titre": "Prêts entièrement remboursés",
+     "etant_donne": "Emprunteur dont tous les prêts validated sont soldés, assurances comprises",
+     "quand": "GET all-loans",
+     "alors": "Ligne présente, loans_count = nombre de prêts, active_loans_count 0, total_outstanding 0.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
      "code": "LP-15",
      "contrainte": false,
      "titre": "Filtre par état",

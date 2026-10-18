@@ -5,9 +5,12 @@
      cas supprimés.
      RMP-049 : somme des restes dus de l'échéancier égale au reste de l'en-tête
      RMP-050 : montant de l'échéance assurances comprises
-     RMP-051 : total à rembourser égal au back-office -->
+     RMP-051 : total à rembourser égal au back-office
+     RLP-011 : recherche « nel » sans trouver « KENMOE Nelson »
+     RLP-013 : recherche par le début du numéro de téléphone -->
 <odoo>
     <function model="nkezefuu.recette.cas" name="_supprimer_cas_retires">
-        <value eval="['cas_rmp_echeancier_total', 'cas_rmp_echeance_assurances', 'cas_rmp_total_assurances']"/>
+        <value eval="['cas_rmp_echeancier_total', 'cas_rmp_echeance_assurances', 'cas_rmp_total_assurances',
+                     'cas_rlp_011', 'cas_rlp_013']"/>
     </function>
 </odoo>

@@ -3041,7 +3041,7 @@
     {
      "name": "borrowers[].active_loans_count",
      "type": "number",
-     "description": "Nombre de prêts validated."
+     "description": "Nombre de prêts actifs : validated et pas encore soldés, assurances comprises (même reste que total_outstanding). Un prêt entièrement remboursé n'est plus actif ; un brouillon ne l'est jamais."
     },
     {
      "name": "borrowers[].total_outstanding",
