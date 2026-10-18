@@ -51,7 +51,7 @@
        "apiVariable": "borrowers[].repayment_percentage"
       },
       {
-       "label": "Montant en retard",
+       "label": "Montant en retard (sur ses prêts)",
        "apiVariable": "borrowers[].overdue_amount"
       },
       {
@@ -405,9 +405,9 @@
      "code": "LP-09",
      "contrainte": false,
      "titre": "Couleur retard",
-     "etant_donne": "Emprunteur avec une échéance dépassée non réglée",
+     "etant_donne": "Emprunteur avec une échéance de prêt dépassée non réglée",
      "quand": "GET all-loans",
-     "alors": "overdue_amount > 0, status_color #DC2626, status_label retard, même si sa progression est élevée.",
+     "alors": "overdue_amount > 0, status_color #DC2626, status_label « En retard », même si sa progression est élevée.",
      "attendu": {
       "customstatus": 200
      }
@@ -418,7 +418,7 @@
      "titre": "Couleur statut membre",
      "etant_donne": "Emprunteur Invité ou Exclu, sans retard",
      "quand": "GET all-loans",
-     "alors": "status_color #F97316, status_label statut_membre.",
+     "alors": "status_color #F97316, status_label = motif du statut (« Invité », « Exclu »).",
      "attendu": {
       "customstatus": 200
      }
@@ -429,7 +429,7 @@
      "titre": "Couleur totalement remboursé",
      "etant_donne": "Emprunteur en règle, tous prêts payés",
      "quand": "GET all-loans",
-     "alors": "repayment_percentage 100, total_outstanding 0, status_color #23A949, status_label rembourse.",
+     "alors": "repayment_percentage 100, total_outstanding 0, status_color #23A949, status_label « Remboursé ».",
      "attendu": {
       "customstatus": 200
      }
@@ -440,7 +440,7 @@
      "titre": "Couleur non démarré",
      "etant_donne": "Emprunteur en règle, prêt validated sans aucun paiement, échéance non échue",
      "quand": "GET all-loans",
-     "alors": "repayment_percentage 0, status_color #E9ECEF, status_label non_demarre.",
+     "alors": "repayment_percentage 0, status_color #E9ECEF, status_label « Remboursement non démarré ».",
      "attendu": {
       "customstatus": 200
      }
@@ -449,9 +449,20 @@
      "code": "LP-13",
      "contrainte": false,
      "titre": "Priorité retard sur statut",
-     "etant_donne": "Emprunteur défaillant (donc en retard)",
+     "etant_donne": "Emprunteur défaillant avec une échéance de prêt dépassée non réglée",
      "quand": "GET all-loans",
-     "alors": "status_label retard (pas statut_membre) : le retard réel prime.",
+     "alors": "status_label « En retard » (pas « Défaillant ») : le retard réel prime.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "LP-64",
+     "contrainte": false,
+     "titre": "Retard hors prêts",
+     "etant_donne": "Emprunteur défaillant à cause de ses cotisations ou achats d'actions, prêts à jour",
+     "quand": "GET all-loans",
+     "alors": "overdue_amount 0, status_color #F97316, status_label « Défaillant ».",
      "attendu": {
       "customstatus": 200
      }

@@ -2945,7 +2945,7 @@
          "member_types": "cooperator"
         },
         "status_color": "#FF9A76",
-        "status_label": "remboursement_demarre"
+        "status_label": "Remboursement démarré"
        },
        {
         "user_id": 61,
@@ -2962,7 +2962,7 @@
          "member_types": "cooperator"
         },
         "status_color": "#DC2626",
-        "status_label": "retard"
+        "status_label": "En retard"
        }
       ],
       "loan_limits": {
@@ -3056,7 +3056,7 @@
     {
      "name": "borrowers[].overdue_amount",
      "type": "number",
-     "description": "Montant des échéances en retard (date dépassée, non réglées), même détection que l'écran des échéances en attente."
+     "description": "Montant en retard sur ses prêts : échéances et frais d'assurance de ses prêts validated dont la date est dépassée et non réglés. Les cotisations, achats d'actions et autres échéances du membre n'y sont pas : un membre défaillant pour ces raisons a overdue_amount 0 et reste signalé en orange, avec son statut (« Défaillant ») dans status_label."
     },
     {
      "name": "borrowers[].eligibility.is_eligible",
@@ -3086,7 +3086,7 @@
     {
      "name": "borrowers[].status_label",
      "type": "string",
-     "description": "Code du statut correspondant à la couleur : retard, statut_membre, rembourse, presque_rembourse, a_moitie_rembourse, remboursement_partiel, remboursement_demarre, non_demarre."
+     "description": "Texte du statut, à afficher tel quel, correspondant à la couleur : « En retard » (échéance de prêt dépassée), le motif du statut bloquant (« Défaillant », « Exclu », « Suspendu », « Retrait », « Invité »), puis selon la progression « Remboursé », « Presque remboursé », « À moitié remboursé », « Remboursement partiel », « Remboursement démarré », « Remboursement non démarré ». Ne pas s'en servir comme code dans une condition : utiliser status_color ou eligibility."
     },
     {
      "name": "loans[]",

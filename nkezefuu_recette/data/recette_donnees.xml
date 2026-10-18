@@ -555,6 +555,14 @@
         <field name="action">Consulter un emprunteur dont tous les prêts validés sont entièrement remboursés, assurances comprises.</field>
         <field name="attendu">L'emprunteur figure dans la liste avec tous ses prêts au total, aucun prêt actif et un encours nul.</field>
     </record>
+    <record id="cas_rlp_retard_hors_prets" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'liste')]"/>
+        <field name="sequence">80</field>
+        <field name="ecran">Liste des prêts</field>
+        <field name="profil">Gestionnaire</field>
+        <field name="action">Consulter un emprunteur dont les prêts sont à jour, mais en retard sur ses cotisations ou ses achats d'actions.</field>
+        <field name="attendu">Le montant en retard est nul : seuls les prêts y sont comptés. L'emprunteur est signalé en orange (statut de membre), et non en rouge.</field>
+    </record>
     <record id="cas_rlp_010" model="nkezefuu.recette.cas">
         <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'choix-demandeur')]"/>
         <field name="numero">10</field>
