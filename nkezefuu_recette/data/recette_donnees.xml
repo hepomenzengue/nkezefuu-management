@@ -695,15 +695,6 @@
         <field name="action">Sélectionner un demandeur de type « Invité », puis envoyer la demande.</field>
         <field name="attendu">La demande est rejetée. Le message nomme le membre et indique son statut.</field>
     </record>
-    <record id="cas_rlp_027" model="nkezefuu.recette.cas">
-        <field name="etape_id" search="[('parcours_id.code', '=', 'liste-des-prets'), ('cle', '=', 'envoi')]"/>
-        <field name="numero">27</field>
-        <field name="sequence">40</field>
-        <field name="ecran">Formulaire de demande</field>
-        <field name="profil">Gestionnaire</field>
-        <field name="action">Sélectionner un projet comme demandeur, puis envoyer la demande.</field>
-        <field name="attendu">La demande est acceptée : les conditions de statut ne s'appliquent qu'aux membres.</field>
-    </record>
 
     <!-- Consulter le détail d'un prêt -->
     <record id="cas_rlp_028" model="nkezefuu.recette.cas">

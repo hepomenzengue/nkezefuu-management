@@ -3666,7 +3666,7 @@
      "in": "body",
      "type": "number",
      "required": true,
-     "description": "Obligatoire pour un gestionnaire/admin : res.users id du demandeur (membre ou projet existant). Ignoré pour un membre simple, toujours lui-même.",
+     "description": "Obligatoire pour un gestionnaire/admin : res.users id du demandeur (membre existant, issu de member-search). Ignoré pour un membre simple, toujours lui-même.",
      "example": "45"
     }
    ],
@@ -4403,7 +4403,7 @@
    "categorie": "loans",
    "methode": "POST",
    "chemin": "/api/auth/request-loan-for-member",
-   "resume": "Demande de prêt pour un membre ou projet choisi (gestionnaire), avalistes possibles",
+   "resume": "Demande de prêt pour un membre choisi (gestionnaire), avalistes possibles",
    "acces": "manager",
    "enveloppe": false,
    "usage": "Bouton 'Valider' du formulaire de demande, écran 'Liste des prêts'.",
@@ -4411,7 +4411,7 @@
     "Capacité du demandeur : simple alerte à afficher côté mobile (comparer au capacity.limit reçu via all-loans?user_id=), sauf si le demandeur est le compte connecté (blocage).",
     "Éligibilité (statut/invite) : bloquante, sans exception de role.",
     "guarantor_ids attend des member_id (members[].member_id), pas des user_id. Erreur classique à éviter.",
-    "Un projet peut être demandeur : dans ce cas, aucune contrainte de statut/invite ne s'applique."
+    "Le demandeur est toujours un membre : le sélecteur (member-search) ne propose pas les projets, et le mobile n'envoie jamais le user_id d'un projet."
    ],
    "parametres": [
     {
@@ -4419,7 +4419,7 @@
      "in": "body",
      "type": "number",
      "required": true,
-     "description": "res.users id du demandeur : members[].user_id du picker, ou loan.borrower_id depuis un prêt existant. Membre ou projet.",
+     "description": "res.users id du demandeur : members[].user_id du picker, ou loan.borrower_id depuis un prêt existant. Toujours un membre depuis le mobile.",
      "example": "45"
     },
     {
