@@ -15,7 +15,7 @@ RESULTATS = [
     ('blocked', 'Bloqué'),
     # La fonction, l'écran ou le bouton n'existe pas dans l'application : à ne pas
     # confondre avec Non conforme (elle existe mais se comporte mal) ni avec Bloqué
-    # (le test est empêché par autre chose, et reste à la main du testeur).
+    # (le test est empêché par autre chose, que le développeur doit lever).
     ('not_implemented', 'Non implémenté'),
     ('passed_after_fix', 'Conforme après correction'),
     ('still_failing', 'Toujours non conforme'),
@@ -46,7 +46,6 @@ BALLES = [
 ]
 
 RESULTATS_OK = ('passed', 'passed_after_fix')
-RESULTATS_EN_ECHEC = ('passed_with_reserve', 'failed', 'still_failing', 'regression', 'not_implemented')
 
 # Ce que le testeur peut poser selon que le développeur a répondu en dernier ou non.
 # Après une réponse, il confirme ou conteste ; sans réponse, il constate.
@@ -61,8 +60,10 @@ RESULTATS_APRES_REPONSE = ('passed', 'passed_after_fix', 'passed_with_reserve', 
 # porte le motif, et pour une conformité avec réserve, la réserve.
 RESULTATS_AVEC_CONSTAT = ('passed_with_reserve', 'failed', 'still_failing', 'regression', 'blocked', 'not_implemented', 'postponed')
 
-# Le développeur ne peut répondre que si le testeur attend son action, ou pour
-# compléter sa propre réponse tant que le testeur n'a pas repris la main.
+# Résultats qui attendent le développeur. Bloqué en fait partie : ce qui empêche le
+# test (plantage avant l'écran, rôle ou données manquants) se lève de son côté, et
+# il dit qu'il a débloqué par « Corrigé, à retester ». Il ne peut répondre que dans
+# ces cas, ou pour compléter sa propre réponse tant que le testeur n'a pas repris la main.
 RESULTATS_A_TRAITER = ('passed_with_reserve', 'failed', 'still_failing', 'regression', 'blocked', 'not_implemented')
 
 # Une réponse sans explication est acceptée pour « En cours d'analyse » et « Corrigé, à
@@ -200,10 +201,10 @@ class RecetteCas(models.Model):
                 cas.balle = 'developer' if cas.suite == 'in_progress' else 'tester'
             elif cas.resultat in RESULTATS_OK:
                 cas.balle = 'closed'
-            elif cas.resultat in RESULTATS_EN_ECHEC:
+            elif cas.resultat in RESULTATS_A_TRAITER:
                 cas.balle = 'developer'
             else:
-                # Non testé, ou Bloqué : c'est au testeur d'avancer
+                # Non testé : c'est au testeur d'avancer
                 cas.balle = 'tester'
 
     # ----------------------------------------------------------------------

@@ -156,9 +156,9 @@ qui était demandé est bon, mais un point reste à corriger, par exemple sur un
 développeur) exige la réserve dans `observed_result`, renvoie le cas au développeur et
 empêche la publication tant qu'elle n'est pas levée. « Non implémenté » (la fonction
 n'existe pas dans l'application) se distingue de « Non conforme » (elle existe mais se
-comporte mal) et de « Bloqué » (le test est empêché par autre chose) : il attend une
-action du développeur, qui peut aussi demander des précisions en cas
-d'incompréhension. Statuts de correction : `in_progress`,
+comporte mal) et de « Bloqué » (le test est empêché par autre chose) : tous deux
+attendent une action du développeur, qui peut aussi demander des précisions en cas
+d'incompréhension. Pour un cas bloqué, « Corrigé, à retester » signifie débloqué. Statuts de correction : `in_progress`,
 `fixed_to_retest`, `works_as_intended`, `needs_clarification`. Action attendue de
 (`awaiting`) : `tester`, `developer`, `closed`. Profils (`roles`) : `tester`,
 `acceptance_admin`, `mobile_developer`. Versions : type `patch`, `minor`, `major` ;

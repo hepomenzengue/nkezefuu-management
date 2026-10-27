@@ -1,6 +1,6 @@
 {
     'name': 'NKEZEFUU RECETTE',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.2.1',
     # Négatif pour passer devant les modules standard, dont la séquence vaut 100 :
     # même convention que nkezefuu (-100) et nkezefuu_fuu (-99) côté coopérative.
     'sequence': -100,
