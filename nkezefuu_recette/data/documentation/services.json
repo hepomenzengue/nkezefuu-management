@@ -9309,7 +9309,8 @@
         "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
         "sender_account": {
          "id": 7,
-         "account": "521102 BANQUE KP"
+         "general_account": "521102 BANQUE KP",
+         "description": "BANQUE KP"
         },
         "sender_manager": {
          "id": 12,
@@ -9317,7 +9318,8 @@
         },
         "recipient_account": {
          "id": 9,
-         "account": "521101 Afriland First Bank"
+         "general_account": "521101 Afriland First Bank",
+         "description": "Afriland First Bank"
         },
         "recipient_manager": {
          "id": 18,
@@ -9367,6 +9369,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfers[].sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfers[].sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -9385,6 +9392,11 @@
      "name": "transfers[].recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfers[].recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfers[].recipient_manager.id",
@@ -9576,7 +9588,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -9584,7 +9597,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -9613,7 +9627,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -9621,7 +9636,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -9670,6 +9686,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfer.sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfer.sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -9688,6 +9709,11 @@
      "name": "transfer.recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfer.recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfer.recipient_manager.id",
@@ -9937,7 +9963,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -9945,7 +9972,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -9994,6 +10022,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfer.sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfer.sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -10012,6 +10045,11 @@
      "name": "transfer.recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfer.recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfer.recipient_manager.id",
@@ -10193,7 +10231,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -10201,7 +10240,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -10250,6 +10290,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfer.sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfer.sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -10268,6 +10313,11 @@
      "name": "transfer.recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfer.recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfer.recipient_manager.id",
@@ -10415,7 +10465,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -10423,7 +10474,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -10472,6 +10524,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfer.sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfer.sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -10490,6 +10547,11 @@
      "name": "transfer.recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfer.recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfer.recipient_manager.id",
@@ -10637,7 +10699,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -10645,7 +10708,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -10694,6 +10758,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfer.sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfer.sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -10712,6 +10781,11 @@
      "name": "transfer.recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfer.recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfer.recipient_manager.id",
@@ -10871,7 +10945,8 @@
        "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
        "sender_account": {
         "id": 7,
-        "account": "521102 BANQUE KP"
+        "general_account": "521102 BANQUE KP",
+        "description": "BANQUE KP"
        },
        "sender_manager": {
         "id": 12,
@@ -10879,7 +10954,8 @@
        },
        "recipient_account": {
         "id": 9,
-        "account": "521101 Afriland First Bank"
+        "general_account": "521101 Afriland First Bank",
+        "description": "Afriland First Bank"
        },
        "recipient_manager": {
         "id": 18,
@@ -10928,6 +11004,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfer.sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfer.sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -10946,6 +11027,11 @@
      "name": "transfer.recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfer.recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfer.recipient_manager.id",
@@ -11087,7 +11173,8 @@
         "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
         "sender_account": {
          "id": 7,
-         "account": "521102 BANQUE KP"
+         "general_account": "521102 BANQUE KP",
+         "description": "BANQUE KP"
         },
         "sender_manager": {
          "id": 12,
@@ -11095,7 +11182,8 @@
         },
         "recipient_account": {
          "id": 9,
-         "account": "521101 Afriland First Bank"
+         "general_account": "521101 Afriland First Bank",
+         "description": "Afriland First Bank"
         },
         "recipient_manager": {
          "id": 18,
@@ -11144,6 +11232,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfers[].sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfers[].sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -11162,6 +11255,11 @@
      "name": "transfers[].recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfers[].recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfers[].recipient_manager.id",
@@ -11284,7 +11382,8 @@
         "name": "Hervé(521102)→Sarah(521101)/100000 FCFA/2026-09-25",
         "sender_account": {
          "id": 7,
-         "account": "521102 BANQUE KP"
+         "general_account": "521102 BANQUE KP",
+         "description": "BANQUE KP"
         },
         "sender_manager": {
          "id": 12,
@@ -11292,7 +11391,8 @@
         },
         "recipient_account": {
          "id": 9,
-         "account": "521101 Afriland First Bank"
+         "general_account": "521101 Afriland First Bank",
+         "description": "Afriland First Bank"
         },
         "recipient_manager": {
          "id": 18,
@@ -11341,6 +11441,11 @@
      "description": "display_name du compte comptable émetteur."
     },
     {
+     "name": "transfers[].sender_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire émetteur (ex. BANQUE KP), à afficher à l'utilisateur."
+    },
+    {
      "name": "transfers[].sender_manager.id",
      "type": "number",
      "description": "Émetteur désigné : seul lui (ou l'admin) peut modifier/soumettre/annuler ce virement."
@@ -11359,6 +11464,11 @@
      "name": "transfers[].recipient_account.general_account",
      "type": "string",
      "description": "display_name du compte comptable destinataire."
+    },
+    {
+     "name": "transfers[].recipient_account.description",
+     "type": "string",
+     "description": "Nom du compte bancaire destinataire (ex. BANQUE KP), à afficher à l'utilisateur."
     },
     {
      "name": "transfers[].recipient_manager.id",

@@ -58,11 +58,11 @@
       },
       {
        "label": "Compte émetteur",
-       "apiVariable": "transfers[].sender_account.general_account"
+       "apiVariable": "transfers[].sender_account.description"
       },
       {
        "label": "Compte destinataire",
-       "apiVariable": "transfers[].recipient_account.general_account"
+       "apiVariable": "transfers[].recipient_account.description"
       },
       {
        "label": "Montant",
@@ -96,7 +96,11 @@
       },
       {
        "label": "Compte émetteur",
-       "apiVariable": "transfers[].sender_account.general_account"
+       "apiVariable": "transfers[].sender_account.description"
+      },
+      {
+       "label": "Compte destinataire",
+       "apiVariable": "transfers[].recipient_account.description"
       },
       {
        "label": "Émetteur désigné",
@@ -149,7 +153,8 @@
          "label": "Créé par",
          "apiVariable": "transactions[].created_by.name"
         }
-       ]
+       ],
+       "note": "Filtres : Tous, Brouillons, Validés. Pas de filtre « Annulés » : une transaction n'a que deux états, brouillon et réalisé, et une annulation la ramène en brouillon."
       }
      ],
      "etapes": [
@@ -164,9 +169,9 @@
           {
            "id": "B1",
            "field": "Bénéficiaire",
-           "rule": "Uniquement un membre (pas un projet), revérifié côté serveur.",
+           "rule": "Obligatoire. Uniquement un membre (pas un projet), revérifié côté serveur.",
            "apiVariable": "partner_id",
-           "appControl": "Le champ ne propose que des membres, via beneficiary-search."
+           "appControl": "Champ obligatoire, libellé « Bénéficiaire » (sans « Optionnel » ni « / Partenaire »), prérempli. Ne propose que des membres, via beneficiary-search. Envoi bloqué tant qu'il est vide."
           },
           {
            "id": "B2",
@@ -188,6 +193,20 @@
            "rule": "Toujours celle du serveur, jamais saisie ni envoyée par l'app.",
            "apiVariable": "transaction_date",
            "appControl": "Champ non éditable."
+          },
+          {
+           "id": "B5",
+           "field": "Type",
+           "rule": "Dépôt (deposit) ou retrait (withdrawal).",
+           "apiVariable": "transaction_type",
+           "appControl": "Boutons « Dépôt » et « Retrait », sans mention « (Crédit) » ni « (Débit) »."
+          },
+          {
+           "id": "B6",
+           "field": "Valider immédiatement",
+           "rule": "Désactivé : enregistrement en brouillon. Activé : création et validation dans le même appel.",
+           "apiVariable": "validate",
+           "appControl": "Désactivé par défaut. Bouton « Enregistrer » quand il est désactivé, « Valider le dépôt » ou « Valider le retrait » quand il est activé."
           }
          ]
         }

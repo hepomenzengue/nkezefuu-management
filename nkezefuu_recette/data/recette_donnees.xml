@@ -823,6 +823,14 @@
         <field name="action">Consulter « Mes envois » après la validation d'un virement par son destinataire.</field>
         <field name="attendu">Le virement n'apparaît plus dans « Mes envois ». Il reste consultable dans les virements du compte concerné.</field>
     </record>
+    <record id="cas_rmcb_envois_banques" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'envois')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Mes envois</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Consulter un virement dans « Mes envois ».</field>
+        <field name="attendu">Le virement affiche le nom de la banque émettrice et celui de la banque destinataire.</field>
+    </record>
 
     <!-- Suivre les virements à recevoir -->
     <record id="cas_rmcb_010" model="nkezefuu.recette.cas">
@@ -833,6 +841,14 @@
         <field name="profil">Gestionnaire des comptes bancaires</field>
         <field name="action">Toucher le compteur des réceptions.</field>
         <field name="attendu">La liste « Mes réceptions » s'ouvre avec les virements en attente dont l'utilisateur est le destinataire désigné, et le nom de l'émetteur.</field>
+    </record>
+    <record id="cas_rmcb_receptions_banques" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'receptions')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Mes réceptions</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Consulter un virement dans « Mes réceptions ».</field>
+        <field name="attendu">Le virement affiche le nom de la banque émettrice et celui de la banque destinataire.</field>
     </record>
 
     <!-- Consulter les mouvements du compte -->
@@ -853,6 +869,14 @@
         <field name="profil">Gestionnaire des comptes bancaires</field>
         <field name="action">Tenter d'annuler une transaction réalisée.</field>
         <field name="attendu">L'annulation est rejetée, y compris pour le créateur de la transaction.</field>
+    </record>
+    <record id="cas_rmcb_mouvements_filtres" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'mouvements')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Mouvements bancaires</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Consulter les filtres de la liste des mouvements.</field>
+        <field name="attendu">Les filtres proposés sont Tous, Brouillons et Validés. Aucun filtre « Annulés » n'est proposé.</field>
     </record>
 
     <!-- Saisir un dépôt ou un retrait -->
@@ -891,6 +915,22 @@
         <field name="profil">Gestionnaire des comptes bancaires</field>
         <field name="action">Créer une transaction en touchant directement « Valider ».</field>
         <field name="attendu">La transaction est créée à l'état réalisé, sans passer par le brouillon.</field>
+    </record>
+    <record id="cas_rmcb_transaction_formulaire" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-transaction')]"/>
+        <field name="sequence">50</field>
+        <field name="ecran">Nouveau Dépôt / Retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Ouvrir le formulaire d'un nouveau dépôt ou retrait.</field>
+        <field name="attendu">Les boutons s'intitulent « Dépôt » et « Retrait », sans mention « (Crédit) » ni « (Débit) ». Le bénéficiaire est prérempli. L'option « Valider immédiatement » est désactivée et le bouton du bas s'intitule « Enregistrer ».</field>
+    </record>
+    <record id="cas_rmcb_transaction_beneficiaire" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-transaction')]"/>
+        <field name="sequence">60</field>
+        <field name="ecran">Nouveau Dépôt / Retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Effacer le bénéficiaire, saisir un montant, puis toucher « Enregistrer ».</field>
+        <field name="attendu">Le champ « Bénéficiaire » est signalé comme obligatoire. L'enregistrement est refusé tant qu'aucun membre n'est choisi.</field>
     </record>
 
     <!-- Modifier un brouillon de transaction -->
