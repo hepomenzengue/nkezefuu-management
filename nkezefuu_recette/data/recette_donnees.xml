@@ -933,6 +933,136 @@
         <field name="attendu">Le champ « Bénéficiaire » est signalé comme obligatoire. L'enregistrement est refusé tant qu'aucun membre n'est choisi.</field>
     </record>
 
+    <!-- Recharges et retraits électroniques (compte pawaPay) -->
+    <record id="cas_rmcb_ele_actions" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'electroniques')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Mes comptes bancaires</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Déplier le compte des recharges et retraits électroniques.</field>
+        <field name="attendu">Les actions proposées sont « Recharges et retraits électroniques » et « Virements bancaires ». « Mouvements bancaires » n'est pas proposé.</field>
+    </record>
+    <record id="cas_rmcb_ele_autre_compte" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'electroniques')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Mes comptes bancaires</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Déplier un autre compte bancaire.</field>
+        <field name="attendu">Les actions « Mouvements bancaires » et « Virements bancaires » sont proposées, comme avant.</field>
+    </record>
+    <record id="cas_rmcb_ele_historique" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'electroniques')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Recharges et retraits électroniques</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Ouvrir « Recharges et retraits électroniques ».</field>
+        <field name="attendu">La liste affiche toutes les opérations, réussies, en attente et échouées, de la plus récente à la plus ancienne, avec la date, la référence, le membre, le type, l'opérateur, le téléphone, l'auteur, les montants, le statut et le motif d'un échec.</field>
+    </record>
+    <record id="cas_rmcb_ele_telephone_fiche" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Ouvrir « Nouveau retrait », puis choisir un membre dont la fiche porte un numéro de téléphone.</field>
+        <field name="attendu">Le numéro de la fiche est prérempli et reste modifiable. L'opérateur correspondant au numéro est présélectionné.</field>
+    </record>
+    <record id="cas_rmcb_ele_telephone_vide" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Choisir un membre dont la fiche ne porte aucun numéro de téléphone.</field>
+        <field name="attendu">Le champ du numéro reste vide.</field>
+    </record>
+    <record id="cas_rmcb_ele_recherche" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Ouvrir la recherche du membre.</field>
+        <field name="attendu">Seuls des membres sont proposés. Aucun projet n'apparaît.</field>
+    </record>
+    <record id="cas_rmcb_ele_prefixes" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">40</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Saisir successivement un numéro commençant par 686, par 640, puis par 680.</field>
+        <field name="attendu">Orange Money est présélectionné pour les deux premiers numéros, MTN MoMo pour le troisième.</field>
+    </record>
+    <record id="cas_rmcb_ele_nexttel" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">50</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Saisir un numéro commençant par 684.</field>
+        <field name="attendu">Le message « Ce numéro n'est ni un numéro MTN MoMo ni un numéro Orange Money. » s'affiche. Le bouton de validation est inactif.</field>
+    </record>
+    <record id="cas_rmcb_ele_frais" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">60</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Avec les frais à la charge du membre, saisir un montant, puis changer d'opérateur.</field>
+        <field name="attendu">Les lignes Frais et Montant total s'affichent et se recalculent à chaque changement de montant ou d'opérateur.</field>
+    </record>
+    <record id="cas_rmcb_ele_mauvais_operateur" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">70</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Saisir un numéro Orange, choisir MTN MoMo, puis valider.</field>
+        <field name="attendu">L'opération est refusée avec le message « Ce numéro est un numéro Orange Money et non MTN MoMo. ». Aucune opération n'est ajoutée à la liste.</field>
+    </record>
+    <record id="cas_rmcb_ele_solde" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">80</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Lancer un retrait dont le montant total dépasse le solde du membre.</field>
+        <field name="attendu">Le retrait est refusé avec le message « Solde insuffisant pour ce retrait. ». Aucune opération n'est ajoutée à la liste.</field>
+    </record>
+    <record id="cas_rmcb_ele_en_cours" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">90</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Lancer une opération pour un membre qui a déjà une recharge ou un retrait en attente.</field>
+        <field name="attendu">L'opération est refusée. Le message indique qu'une opération est déjà en cours sur ce compte.</field>
+    </record>
+    <record id="cas_rmcb_ele_reussite" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'resultat-operation-electronique')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Recharges et retraits électroniques</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Lancer une recharge, puis la valider sur le téléphone avec le code secret.</field>
+        <field name="attendu">L'opération passe à l'état réussi. Le solde du membre augmente du montant à créditer. L'opération figure dans la liste avec le nom de l'auteur.</field>
+    </record>
+    <record id="cas_rmcb_ele_echec" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'resultat-operation-electronique')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Recharges et retraits électroniques</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Lancer un retrait refusé par l'opérateur.</field>
+        <field name="attendu">Le motif du refus s'affiche. L'opération figure dans la liste à l'état échoué, avec son motif. Le solde du membre est inchangé.</field>
+    </record>
+    <record id="cas_rmcb_ele_actualiser" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'resultat-operation-electronique')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Recharges et retraits électroniques</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Sur une opération en attente, toucher « Actualiser » après sa validation chez l'opérateur.</field>
+        <field name="attendu">Le statut passe à réussi et le solde du membre est mis à jour.</field>
+    </record>
+    <record id="cas_rmcb_ele_guichet" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'electroniques')]"/>
+        <field name="sequence">40</field>
+        <field name="ecran">Recharges et retraits électroniques</field>
+        <field name="profil">Gestionnaire des comptes bancaires</field>
+        <field name="action">Chercher à saisir un dépôt ou un retrait au guichet sur le compte des recharges et retraits électroniques.</field>
+        <field name="attendu">Aucune saisie au guichet n'est proposée. Seules « Nouvelle recharge » et « Nouveau retrait » sont disponibles.</field>
+    </record>
+
     <!-- Modifier un brouillon de transaction -->
     <record id="cas_rmcb_017" model="nkezefuu.recette.cas">
         <field name="etape_id" search="[('parcours_id.code', '=', 'mes-comptes-bancaires'), ('cle', '=', 'modifier-transaction')]"/>
@@ -1256,6 +1386,24 @@
         <field name="profil">Administrateur</field>
         <field name="action">Tenter d'annuler une transaction annulée ou en brouillon.</field>
         <field name="attendu">L'annulation est rejetée. Seule une transaction réalisée peut être annulée.</field>
+    </record>
+
+    <!-- Recharges et retraits électroniques (compte pawaPay) -->
+    <record id="cas_rcb_ele_actions" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'comptes-bancaires'), ('cle', '=', 'electroniques')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Comptes bancaires</field>
+        <field name="profil">Administrateur</field>
+        <field name="action">Déplier le compte des recharges et retraits électroniques.</field>
+        <field name="attendu">L'action « Recharges et retraits électroniques » remplace « Mouvements bancaires ».</field>
+    </record>
+    <record id="cas_rcb_ele_lancer" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'comptes-bancaires'), ('cle', '=', 'nouvelle-operation-electronique')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Nouvelle recharge / Nouveau retrait</field>
+        <field name="profil">Administrateur</field>
+        <field name="action">Lancer une recharge pour un membre depuis ce compte.</field>
+        <field name="attendu">L'opération est envoyée à l'opérateur et apparaît dans la liste, avec l'administrateur comme auteur.</field>
     </record>
 
     <!-- Gérer les virements du compte -->

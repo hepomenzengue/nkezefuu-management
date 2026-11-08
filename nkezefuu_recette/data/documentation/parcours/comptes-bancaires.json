@@ -99,7 +99,7 @@
     {
      "cle": "mouvements",
      "titre": "Gérer les mouvements du compte",
-     "texte": "\"Mouvements bancaires\" : mêmes écran et appels que pour un gestionnaire (`GET bank-account/{id}/transactions`, création, modification, validation), l'admin y a toujours accès même sur un compte dont il n'est pas gestionnaire.",
+     "texte": "\"Mouvements bancaires\" : mêmes écran et appels que pour un gestionnaire (`GET bank-account/{id}/transactions`, création, modification, validation), l'admin y a toujours accès même sur un compte dont il n'est pas gestionnaire. Absente du compte des recharges et retraits électroniques, voir {{electroniques}}.",
      "blocs": [
       {
        "kind": "screen",
@@ -146,6 +146,202 @@
           {
            "label": "Statut après annulation",
            "apiVariable": "transaction.state"
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      }
+     ]
+    },
+    {
+     "cle": "electroniques",
+     "titre": "Consulter les recharges et retraits électroniques",
+     "texte": "Sur le compte des recharges et retraits électroniques (is_mobile_payment_account à true), l'action « Recharges et retraits électroniques » remplace « Mouvements bancaires », comme l'onglet du même nom sur la fiche du compte dans Odoo : `GET bank-account/{id}/mobile-payments` liste toutes les opérations, réussies, en attente et échouées, du plus récent au plus ancien, avec les boutons « Nouvelle recharge » et « Nouveau retrait ». L'administrateur a les mêmes écrans et les mêmes règles que le gestionnaire du compte (parcours « Mes comptes bancaires »).",
+     "blocs": [
+      {
+       "kind": "screen",
+       "title": "Recharges et retraits électroniques",
+       "endpointIds": [
+        "bank-account-mobile-payments-list"
+       ],
+       "fields": [
+        {
+         "label": "Date",
+         "apiVariable": "mobile_payments[].request_date"
+        },
+        {
+         "label": "Référence",
+         "apiVariable": "mobile_payments[].name"
+        },
+        {
+         "label": "Membre",
+         "apiVariable": "mobile_payments[].member.name"
+        },
+        {
+         "label": "Type",
+         "apiVariable": "mobile_payments[].operation_type"
+        },
+        {
+         "label": "Opérateur",
+         "apiVariable": "mobile_payments[].provider_label"
+        },
+        {
+         "label": "Téléphone",
+         "apiVariable": "mobile_payments[].phone_number"
+        },
+        {
+         "label": "Lancée par",
+         "apiVariable": "mobile_payments[].created_by.name"
+        },
+        {
+         "label": "Montant",
+         "apiVariable": "mobile_payments[].amount"
+        },
+        {
+         "label": "Montant membre",
+         "apiVariable": "mobile_payments[].member_amount"
+        },
+        {
+         "label": "Statut",
+         "apiVariable": "mobile_payments[].state"
+        },
+        {
+         "label": "Motif",
+         "apiVariable": "mobile_payments[].failure_reason"
+        }
+       ],
+       "note": "Une opération échouée n'a rien comptabilisé : elle reste dans la liste pour la trace, avec son motif."
+      }
+     ],
+     "etapes": [
+      {
+       "cle": "nouvelle-operation-electronique",
+       "titre": "Lancer une recharge ou un retrait",
+       "texte": "« Nouvelle recharge » ou « Nouveau retrait » ouvre le formulaire, le même que dans Odoo : il choisit le membre (`GET bank-account/beneficiary-search`), le numéro est prérempli avec celui de sa fiche s'il existe, l'opérateur est proposé d'après le numéro, puis il saisit le montant. À chaque changement de numéro, d'opérateur ou de montant, `GET bank-account/{id}/mobile-payment/preview` renvoie l'opérateur proposé, l'avertissement éventuel et les frais. « Payer » ou « Retirer » envoie `POST bank-account/{id}/mobile-payment`.",
+       "blocs": [
+        {
+         "kind": "mockup",
+         "title": "Formulaire Nouveau retrait",
+         "html": "\n  <div style=\"max-width:360px;display:flex;flex-direction:column;gap:.55rem;font-size:.85rem\">\n    <div style=\"font-weight:600;font-size:1rem\">Nouveau retrait</div>\n    <div style=\"padding:.5rem .7rem;border-radius:.4rem;background:var(--color-warn-soft);color:var(--color-warn)\">Avertissement éventuel (notice.message)</div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Membre</div><div style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">BEGNI Fabien</div></div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Numéro de téléphone (prérempli si la fiche en a un)</div><div style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">694 86 10 95</div></div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Opérateur (proposé d'après le numéro, modifiable)</div>\n      <div style=\"display:flex;gap:1rem\"><span>○ MTN MoMo</span><span style=\"font-weight:600\">● Orange Money</span></div></div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Montant à recevoir</div><div style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">10 000</div></div>\n    <div style=\"display:flex;justify-content:space-between\"><span>Frais</span><span>102 FCFA</span></div>\n    <div style=\"display:flex;justify-content:space-between;font-weight:600\"><span>Montant total à débiter</span><span>10 102 FCFA</span></div>\n    <div style=\"display:flex;gap:.5rem;justify-content:flex-end\">\n      <span style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">Annuler</span>\n      <span style=\"padding:.45rem .9rem;border-radius:.4rem;background:var(--color-accent-soft);color:var(--color-accent-ink);font-weight:600\">Retirer</span>\n    </div>\n    <div style=\"font-size:.75rem;opacity:.7\">Recharge : « Nouvelle recharge », « Montant à créditer », « Montant total à payer », bouton « Payer ».</div>\n  </div>\n"
+        },
+        {
+         "kind": "screen",
+         "title": "Nouvelle recharge / Nouveau retrait",
+         "endpointIds": [
+          "bank-account-beneficiary-search",
+          "bank-account-mobile-payment-preview",
+          "bank-account-mobile-payment-create"
+         ],
+         "fields": [
+          {
+           "label": "Membre",
+           "apiVariable": "beneficiaries[].name"
+          },
+          {
+           "label": "Numéro de téléphone",
+           "apiVariable": "beneficiaries[].phone"
+          },
+          {
+           "label": "Opérateur",
+           "apiVariable": "suggested_provider"
+          },
+          {
+           "label": "Montant à créditer / à recevoir",
+           "apiVariable": "amount"
+          },
+          {
+           "label": "Frais",
+           "apiVariable": "fee_amount"
+          },
+          {
+           "label": "Montant total à payer / à débiter",
+           "apiVariable": "total_amount"
+          },
+          {
+           "label": "Avertissement",
+           "apiVariable": "notice.message"
+          }
+         ]
+        },
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "B12",
+           "field": "Compte",
+           "rule": "Seul le compte choisi dans les Paramètres porte is_mobile_payment_account à true. Aucune saisie au guichet n'y est acceptée, l'argent n'y bouge que par une opération pawaPay.",
+           "apiVariable": "is_mobile_payment_account",
+           "appControl": "Afficher « Recharges et retraits électroniques » à la place de « Mouvements bancaires » ; « Virements bancaires » ne change pas."
+          },
+          {
+           "id": "B13",
+           "field": "Membre",
+           "rule": "Uniquement un membre, revérifié côté serveur.",
+           "apiVariable": "partner_id",
+           "appControl": "Recherche via beneficiary-search ; au choix du membre, préremplir le numéro avec phone s'il existe, sinon laisser le champ vide."
+          },
+          {
+           "id": "B14",
+           "field": "Téléphone",
+           "rule": "9 chiffres d'un numéro camerounais. MTN : 650-654, 67, 680-683. Orange : 655-659, 69, 686-689, 64. Tout autre préfixe (Nexttel 66, 684, 685 ; Camtel) est refusé.",
+           "apiVariable": "phone",
+           "appControl": "Toujours modifiable. Numéro ni MTN ni Orange : notice danger de preview, bouton désactivé."
+          },
+          {
+           "id": "B15",
+           "field": "Opérateur",
+           "rule": "Proposé d'après le numéro ; un opérateur différent de celui du numéro est refusé à la validation.",
+           "apiVariable": "provider",
+           "appControl": "Présélectionner suggested_provider, laisser le choix ; aucun message avant la validation."
+          },
+          {
+           "id": "B16",
+           "field": "Frais",
+           "rule": "Calculés par le serveur d'après les Paramètres (taux par opérateur, prise en charge membre ou coopérative). Frais à la charge du membre : total = montant / (1 - taux), arrondi au franc supérieur.",
+           "apiVariable": "fee_amount / total_amount",
+           "appControl": "Appeler preview à chaque changement de numéro, d'opérateur ou de montant ; lignes Frais et Montant total seulement si show_fees."
+          },
+          {
+           "id": "B17",
+           "field": "Montant",
+           "rule": "Entier, supérieur à zéro, dans les limites de l'opérateur ; opérateur fermé : refus.",
+           "apiVariable": "amount",
+           "appControl": "Afficher l'erreur serveur telle quelle."
+          },
+          {
+           "id": "B18",
+           "field": "Opération en cours",
+           "rule": "Une seule opération en attente par membre ; la suivante est refusée tant que la première n'a pas abouti.",
+           "apiVariable": "state = pending",
+           "appControl": "Afficher l'erreur serveur telle quelle."
+          },
+          {
+           "id": "B19",
+           "field": "Retrait",
+           "rule": "Le total à débiter doit être couvert par le solde du membre, et le membre doit être en règle.",
+           "apiVariable": "member_amount",
+           "appControl": "Afficher l'erreur serveur telle quelle."
+          }
+         ]
+        }
+       ],
+       "etapes": []
+      },
+      {
+       "cle": "resultat-operation-electronique",
+       "titre": "Suivre le résultat de l'opération",
+       "texte": "Après l'envoi, le serveur relit le statut quelques secondes. Réussie : le compte du membre est crédité ou débité, l'opération apparaît dans {{electroniques}}. En attente : « Actualiser » (`POST bank-account/mobile-payment/{id}/refresh`) relit le statut, sinon l'action planifiée le fait chaque minute. Échouée : le motif s'affiche, rien n'est comptabilisé.",
+       "blocs": [
+        {
+         "kind": "rules",
+         "rows": [
+          {
+           "id": "B20",
+           "field": "Résultat",
+           "rule": "pawaPay décide : l'écriture comptable n'est passée qu'après la réussite. Refus : opération à l'état failed avec son motif, aucun solde modifié.",
+           "apiVariable": "state / failure_reason",
+           "appControl": "completed : confirmer ; pending : afficher « Actualiser » (refresh) ; failed : afficher failure_reason."
           }
          ]
         }
@@ -316,6 +512,33 @@
      "etant_donne": "Admin, recipient_manager_id = un gestionnaire",
      "quand": "POST bank-transfer/{id}/approve",
      "alors": "Accepté : l'admin passe outre la désignation.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Recharges et retraits électroniques",
+   "cas": [
+    {
+     "code": "BAA-30",
+     "contrainte": false,
+     "titre": "Admin sur le compte pawaPay",
+     "etant_donne": "Admin système, compte avec is_mobile_payment_account à true",
+     "quand": "POST bank-account/{id}/mobile-payment",
+     "alors": "Accepté, comme pour un gestionnaire du compte.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "BAA-31",
+     "contrainte": false,
+     "titre": "Marqueur du compte",
+     "etant_donne": "Admin système",
+     "quand": "GET all-bank-accounts",
+     "alors": "Seul le compte des Paramètres porte is_mobile_payment_account à true.",
      "attendu": {
       "customstatus": 200
      }
