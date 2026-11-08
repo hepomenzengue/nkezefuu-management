@@ -1,0 +1,407 @@
+{
+ "code": "recharger-et-retirer",
+ "name": "Recharger et retirer",
+ "groupe": "Mon compte",
+ "sequence": 50,
+ "ligne_utilisateur": "Membre connecté, sur son propre compte uniquement. Le gestionnaire passe par le compte des recharges et retraits électroniques (parcours Mes comptes bancaires).",
+ "prefixe_recette": "RRR",
+ "etapes": [
+  {
+   "cle": "solde",
+   "titre": "Voir son solde et les boutons Recharger / Retirer",
+   "texte": "Sur la carte du solde, comme sur la fiche membre dans Odoo : `GET home-member-info` (ou `member-info`) renvoie le solde réel et has_pending_mobile_payment. Tant qu'une opération est en attente, Recharger et Retirer sont grisés et « Actualiser » est proposé ({{resultat}}).",
+   "blocs": [
+    {
+     "kind": "mockup",
+     "title": "Carte du solde",
+     "html": "\n  <div style=\"display:flex;flex-direction:column;gap:.6rem;max-width:360px;font-size:.85rem\">\n    <div style=\"padding:.8rem 1rem;border-radius:.5rem;background:var(--color-accent-soft);color:var(--color-accent-ink)\">\n      <div style=\"font-size:.75rem\">Solde réel</div>\n      <div style=\"font-size:1.35rem;font-weight:600;line-height:1.2\">125 000 FCFA</div>\n      <div style=\"display:flex;gap:.5rem;margin-top:.6rem\">\n        <span style=\"padding:.4rem .8rem;border-radius:.4rem;font-weight:600;border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">Recharger</span><span style=\"padding:.4rem .8rem;border-radius:.4rem;font-weight:600;border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">Retirer</span>\n      </div>\n    </div>\n    <div style=\"padding:.8rem 1rem;border-radius:.5rem;background:var(--color-warn-soft);color:var(--color-warn)\">\n      <div style=\"font-size:.75rem\">Solde réel, opération en attente (has_pending_mobile_payment)</div>\n      <div style=\"font-size:1.35rem;font-weight:600;line-height:1.2\">125 000 FCFA</div>\n      <div style=\"font-size:.75rem\">Recharge ou retrait en cours</div>\n      <div style=\"display:flex;gap:.5rem;margin-top:.6rem;opacity:.45\">\n        <span style=\"padding:.4rem .8rem;border-radius:.4rem;font-weight:600;border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">Recharger</span><span style=\"padding:.4rem .8rem;border-radius:.4rem;font-weight:600;border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">Retirer</span>\n      </div>\n      <div style=\"margin-top:.4rem;font-size:.8rem;text-decoration:underline\">Actualiser</div>\n    </div>\n  </div>\n"
+    },
+    {
+     "kind": "screen",
+     "title": "Carte du solde",
+     "endpointIds": [
+      "home-member-info"
+     ],
+     "fields": [
+      {
+       "label": "Solde réel",
+       "apiVariable": "actual_balance"
+      },
+      {
+       "label": "Opération en attente",
+       "apiVariable": "has_pending_mobile_payment"
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "historique",
+   "titre": "Consulter ses recharges et retraits",
+   "texte": "« Mes recharges et retraits » : `GET member-mobile-payments` liste toutes ses opérations, réussies, en attente et échouées, de la plus récente à la plus ancienne, comme l'onglet « Recharges et retraits électroniques » de sa fiche.",
+   "blocs": [
+    {
+     "kind": "screen",
+     "title": "Mes recharges et retraits",
+     "endpointIds": [
+      "member-mobile-payments-list"
+     ],
+     "fields": [
+      {
+       "label": "Date",
+       "apiVariable": "mobile_payments[].request_date"
+      },
+      {
+       "label": "Référence",
+       "apiVariable": "mobile_payments[].name"
+      },
+      {
+       "label": "Type",
+       "apiVariable": "mobile_payments[].operation_type"
+      },
+      {
+       "label": "Opérateur",
+       "apiVariable": "mobile_payments[].provider_label"
+      },
+      {
+       "label": "Téléphone",
+       "apiVariable": "mobile_payments[].phone_number"
+      },
+      {
+       "label": "Montant",
+       "apiVariable": "mobile_payments[].amount"
+      },
+      {
+       "label": "Montant crédité / débité",
+       "apiVariable": "mobile_payments[].member_amount"
+      },
+      {
+       "label": "Statut",
+       "apiVariable": "mobile_payments[].state"
+      },
+      {
+       "label": "Motif",
+       "apiVariable": "mobile_payments[].failure_reason"
+      }
+     ],
+     "note": "Une opération échouée n'a rien comptabilisé : elle reste dans la liste avec son motif."
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "recharger",
+   "titre": "Recharger son compte",
+   "texte": "« Recharger » ouvre « Recharger mon compte » : le numéro est prérempli avec default_phone s'il existe, l'opérateur est proposé d'après le numéro, le membre saisit le montant à créditer. `GET member-mobile-payment/preview` renvoie à chaque changement l'opérateur proposé, l'avertissement et les frais. « Payer » envoie `POST member-mobile-payment` avec operation_type deposit ; le membre valide ensuite sur son téléphone avec son code secret.",
+   "blocs": [
+    {
+     "kind": "mockup",
+     "title": "Formulaire Recharger mon compte",
+     "html": "\n  <div style=\"max-width:360px;display:flex;flex-direction:column;gap:.55rem;font-size:.85rem\">\n    <div style=\"font-weight:600;font-size:1rem\">Recharger mon compte</div>\n    <div style=\"padding:.5rem .7rem;border-radius:.4rem;background:var(--color-warn-soft);color:var(--color-warn)\">Avertissement éventuel (notice.message)</div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Numéro de téléphone (prérempli si la fiche en a un)</div><div style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">682 44 12 58</div></div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Opérateur (proposé d'après le numéro, modifiable)</div>\n      <div style=\"display:flex;gap:1rem\"><span style=\"font-weight:600\">● MTN MoMo</span><span>○ Orange Money</span></div></div>\n    <div><div style=\"font-size:.75rem;opacity:.7\">Montant à créditer</div><div style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">10 000</div></div>\n    <div style=\"display:flex;justify-content:space-between\"><span>Frais</span><span>179 FCFA</span></div>\n    <div style=\"display:flex;justify-content:space-between;font-weight:600\"><span>Montant total à payer</span><span>10 179 FCFA</span></div>\n    <div style=\"display:flex;gap:.5rem;justify-content:flex-end\">\n      <span style=\"border:1px solid rgba(127,127,127,.35);border-radius:.4rem;padding:.45rem .6rem\">Annuler</span>\n      <span style=\"padding:.4rem .8rem;border-radius:.4rem;font-weight:600;background:var(--color-accent-soft);color:var(--color-accent-ink)\">Payer</span>\n    </div>\n    <div style=\"font-size:.75rem;opacity:.7\">Retrait : « Retirer », « Montant à recevoir », « Montant total à débiter », bouton « Retirer ».</div>\n  </div>\n"
+    },
+    {
+     "kind": "screen",
+     "title": "Recharger mon compte",
+     "endpointIds": [
+      "member-mobile-payment-preview",
+      "member-mobile-payment-create"
+     ],
+     "fields": [
+      {
+       "label": "Numéro de téléphone",
+       "apiVariable": "default_phone"
+      },
+      {
+       "label": "Opérateur",
+       "apiVariable": "suggested_provider"
+      },
+      {
+       "label": "Montant à créditer",
+       "apiVariable": "amount"
+      },
+      {
+       "label": "Frais",
+       "apiVariable": "fee_amount"
+      },
+      {
+       "label": "Montant total à payer",
+       "apiVariable": "total_amount"
+      },
+      {
+       "label": "Avertissement",
+       "apiVariable": "notice.message"
+      }
+     ]
+    },
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "R1",
+       "field": "Compte",
+       "rule": "Toujours le compte du membre connecté ; aucun autre membre n'est accessible.",
+       "apiVariable": "jeton",
+       "appControl": "Aucun choix de membre dans le formulaire."
+      },
+      {
+       "id": "R2",
+       "field": "Opération en cours",
+       "rule": "Une seule recharge ou un seul retrait en attente à la fois ; la suivante est refusée.",
+       "apiVariable": "has_pending_mobile_payment / has_pending",
+       "appControl": "Recharger et Retirer grisés tant que has_pending vaut true, avec « Actualiser »."
+      },
+      {
+       "id": "R3",
+       "field": "Téléphone",
+       "rule": "9 chiffres d'un numéro camerounais. MTN : 650-654, 67, 680-683. Orange : 655-659, 69, 686-689, 64. Tout autre préfixe est refusé.",
+       "apiVariable": "phone",
+       "appControl": "Prérempli avec default_phone s'il existe, sinon vide ; toujours modifiable. Numéro ni MTN ni Orange : notice danger, bouton désactivé."
+      },
+      {
+       "id": "R4",
+       "field": "Opérateur",
+       "rule": "Proposé d'après le numéro ; un opérateur différent de celui du numéro est refusé à la validation.",
+       "apiVariable": "provider",
+       "appControl": "Présélectionner suggested_provider, laisser le choix ; aucun message avant la validation."
+      },
+      {
+       "id": "R5",
+       "field": "Frais",
+       "rule": "Calculés par le serveur d'après les Paramètres. Frais à la charge du membre : total = montant / (1 - taux), arrondi au franc supérieur.",
+       "apiVariable": "fee_amount / total_amount",
+       "appControl": "Appeler preview à chaque changement de numéro, d'opérateur ou de montant ; lignes Frais et Montant total seulement si show_fees."
+      },
+      {
+       "id": "R6",
+       "field": "Montant",
+       "rule": "Entier, supérieur à zéro, dans les limites de l'opérateur ; opérateur fermé : refus.",
+       "apiVariable": "amount",
+       "appControl": "Afficher l'erreur serveur telle quelle."
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "retirer",
+   "titre": "Retirer de l'argent",
+   "texte": "« Retirer » ouvre le même formulaire, intitulé « Retirer » : montant à recevoir sur le téléphone, puis Frais et « Montant total à débiter » si les frais sont à sa charge. « Retirer » envoie `POST member-mobile-payment` avec operation_type withdrawal ; l'argent part dès l'accord de l'opérateur.",
+   "blocs": [
+    {
+     "kind": "screen",
+     "title": "Retirer",
+     "endpointIds": [
+      "member-mobile-payment-preview",
+      "member-mobile-payment-create"
+     ],
+     "fields": [
+      {
+       "label": "Numéro de téléphone",
+       "apiVariable": "default_phone"
+      },
+      {
+       "label": "Opérateur",
+       "apiVariable": "suggested_provider"
+      },
+      {
+       "label": "Montant à recevoir",
+       "apiVariable": "amount"
+      },
+      {
+       "label": "Frais",
+       "apiVariable": "fee_amount"
+      },
+      {
+       "label": "Montant total à débiter",
+       "apiVariable": "total_amount"
+      }
+     ]
+    },
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "R7",
+       "field": "Solde",
+       "rule": "Le montant total à débiter doit être couvert par le solde du membre.",
+       "apiVariable": "member_amount",
+       "appControl": "Afficher l'erreur serveur telle quelle."
+      },
+      {
+       "id": "R8",
+       "field": "Statut",
+       "rule": "Retrait seulement pour un membre en règle.",
+       "apiVariable": "member_status",
+       "appControl": "Afficher l'erreur serveur telle quelle."
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  },
+  {
+   "cle": "resultat",
+   "titre": "Suivre le résultat",
+   "texte": "Après l'envoi, le serveur relit le statut quelques secondes et renvoie le message à afficher. Réussie : le solde est mis à jour. En attente : « Actualiser » (`POST member-mobile-payment/{id}/refresh`), sinon l'action planifiée relit chaque minute. Échouée : le motif s'affiche, rien n'est comptabilisé, les boutons redeviennent actifs.",
+   "blocs": [
+    {
+     "kind": "rules",
+     "rows": [
+      {
+       "id": "R9",
+       "field": "Résultat",
+       "rule": "pawaPay décide : l'écriture comptable n'est passée qu'après la réussite. Refus : opération à l'état failed avec son motif, aucun solde modifié.",
+       "apiVariable": "state / failure_reason",
+       "appControl": "completed : afficher message ; pending : message et « Actualiser » ; failed : afficher error."
+      }
+     ]
+    }
+   ],
+   "etapes": []
+  }
+ ],
+ "tests": [
+  {
+   "groupe": "Accès",
+   "cas": [
+    {
+     "code": "RR-01",
+     "contrainte": "R1",
+     "titre": "Opération d'un autre membre",
+     "etant_donne": "payment_id d'une opération d'un autre membre",
+     "quand": "POST member-mobile-payment/{id}/refresh",
+     "alors": "Refus, même réponse qu'une opération inexistante.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Opération introuvable"
+     }
+    },
+    {
+     "code": "RR-02",
+     "contrainte": "R1",
+     "titre": "Historique limité au membre",
+     "etant_donne": "Membre connecté",
+     "quand": "GET member-mobile-payments",
+     "alors": "Seules ses opérations sont renvoyées.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "RR-03",
+     "contrainte": false,
+     "titre": "Utilisateur sans fiche membre",
+     "etant_donne": "Jeton d'un utilisateur sans fiche membre",
+     "quand": "GET member-mobile-payments",
+     "alors": "Refus.",
+     "attendu": {
+      "customstatus": 404,
+      "message": "Membre introuvable"
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Formulaire",
+   "cas": [
+    {
+     "code": "RR-10",
+     "contrainte": "R3",
+     "titre": "Téléphone de la fiche",
+     "etant_donne": "Fiche avec un téléphone, puis sans",
+     "quand": "GET member-mobile-payments",
+     "alors": "default_phone vaut le numéro de la fiche, puis null.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "RR-11",
+     "contrainte": "R3",
+     "titre": "Numéro Nexttel",
+     "etant_donne": "phone=684000000",
+     "quand": "GET member-mobile-payment/preview",
+     "alors": "Aucun opérateur proposé, notice danger, can_submit à false.",
+     "attendu": {
+      "customstatus": 200
+     }
+    },
+    {
+     "code": "RR-12",
+     "contrainte": "R4",
+     "titre": "Opérateur différent du numéro",
+     "etant_donne": "Numéro MTN, provider=ORANGE_CMR",
+     "quand": "POST member-mobile-payment",
+     "alors": "Refus, rien n'est enregistré.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Ce numéro est un numéro MTN MoMo et non Orange Money."
+     }
+    },
+    {
+     "code": "RR-13",
+     "contrainte": "R5",
+     "titre": "Frais de recharge à la charge du membre",
+     "etant_donne": "Recharge MTN de 10 000, taux 1,75 %",
+     "quand": "GET member-mobile-payment/preview",
+     "alors": "fee_amount 179, total_amount 10 179.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  },
+  {
+   "groupe": "Opérations",
+   "cas": [
+    {
+     "code": "RR-20",
+     "contrainte": "R2",
+     "titre": "Deuxième opération pendant une attente",
+     "etant_donne": "Opération pending",
+     "quand": "POST member-mobile-payment",
+     "alors": "Refus, rien n'est enregistré.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "RR-21",
+     "contrainte": "R7",
+     "titre": "Retrait supérieur au solde",
+     "etant_donne": "Total à débiter > solde",
+     "quand": "POST member-mobile-payment (withdrawal)",
+     "alors": "Refus, aucune opération ajoutée.",
+     "attendu": {
+      "customstatus": 400,
+      "message": "Solde insuffisant pour ce retrait."
+     }
+    },
+    {
+     "code": "RR-22",
+     "contrainte": "R9",
+     "titre": "Refus de pawaPay",
+     "etant_donne": "Numéro de test sandbox qui provoque un échec",
+     "quand": "POST member-mobile-payment",
+     "alors": "mobile_payment failed avec failure_reason dans error ; solde inchangé ; has_pending à false.",
+     "attendu": {
+      "customstatus": 400
+     }
+    },
+    {
+     "code": "RR-23",
+     "contrainte": "R9",
+     "titre": "Recharge validée puis actualisée",
+     "etant_donne": "Recharge pending validée sur le téléphone",
+     "quand": "POST member-mobile-payment/{id}/refresh",
+     "alors": "state completed, has_pending false, solde augmenté du montant à créditer.",
+     "attendu": {
+      "customstatus": 200
+     }
+    }
+   ]
+  }
+ ]
+}

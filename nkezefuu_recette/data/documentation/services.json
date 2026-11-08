@@ -26,6 +26,11 @@
    "description": "Historique des opérations financieres"
   },
   {
+   "code": "member_mobile_payments",
+   "name": "Recharges et retraits",
+   "description": "Recharges et retraits électroniques (MTN MoMo, Orange Money) du membre connecté, sur son propre compte"
+  },
+  {
    "code": "charges",
    "name": "Charges à payer",
    "description": "Échéances du membre, modes de paiement et suivi des dettes"
@@ -1071,7 +1076,8 @@
       },
       "creation_date": "01/01/2023",
       "status": 200,
-      "customstatus": 200
+      "customstatus": 200,
+      "has_pending_mobile_payment": false
      }
     }
    ],
@@ -1115,6 +1121,11 @@
      "name": "creation_date",
      "type": "string (JJ/MM/AAAA)",
      "description": "Date de création de la fiche membre."
+    },
+    {
+     "name": "has_pending_mobile_payment",
+     "type": "boolean",
+     "description": "true si une recharge ou un retrait électronique est en attente : griser Recharger et Retirer."
     },
     {
      "name": "status",
@@ -1177,7 +1188,8 @@
       "name": "Nom du membre",
       "actual_balance": 1500.5,
       "status": 200,
-      "customstatus": 200
+      "customstatus": 200,
+      "has_pending_mobile_payment": false
      }
     }
    ],
@@ -1191,6 +1203,11 @@
      "name": "actual_balance",
      "type": "number",
      "description": "Solde réel du compte membre (écritures postées à échéance passée ou du jour), en FCFA."
+    },
+    {
+     "name": "has_pending_mobile_payment",
+     "type": "boolean",
+     "description": "true si une recharge ou un retrait électronique est en attente : griser Recharger et Retirer."
     },
     {
      "name": "status",
@@ -1408,6 +1425,974 @@
      "customstatus": 500,
      "message": "Erreur serveur",
      "when": "Exception inattendue côté serveur : voir les logs Odoo."
+    }
+   ]
+  },
+  {
+   "code": "member-mobile-payments-list",
+   "categorie": "member_mobile_payments",
+   "methode": "GET",
+   "chemin": "/api/auth/member-mobile-payments",
+   "resume": "Mes recharges et retraits : historique, opération en cours et téléphone de ma fiche",
+   "acces": "member",
+   "enveloppe": false,
+   "usage": "Écran « Mes recharges et retraits », comme l'onglet « Recharges et retraits électroniques » de la fiche membre dans Odoo.",
+   "notes": [
+    "Uniquement les opérations du membre connecté : réussies, en attente et échouées, de la plus récente à la plus ancienne.",
+    "has_pending à true : griser Recharger et Retirer (le serveur refuse de toute façon une deuxième opération).",
+    "default_phone : numéro de la fiche du membre, pour préremplir le formulaire ; null s'il n'est pas renseigné (champ laissé vide)."
+   ],
+   "parametres": [],
+   "exemple_requete": "GET /api/auth/member-mobile-payments\nAuthorization: Bearer <token>",
+   "exemples_succes": [
+    {
+     "body": {
+      "mobile_payments": [
+       {
+        "id": 7,
+        "name": "RRE/2026/00007",
+        "operation_type": "withdrawal",
+        "member": {
+         "id": 26,
+         "partner_id": 245,
+         "name": "BEGNI Fabien"
+        },
+        "provider": "ORANGE_CMR",
+        "provider_label": "Orange Money",
+        "phone_number": "237694861095",
+        "amount": 10000,
+        "member_amount": 10102,
+        "fee_payer": "member",
+        "fee_rate": 1.0,
+        "fee_amount": 102,
+        "state": "completed",
+        "failure_reason": null,
+        "request_date": "2026-11-08T20:51:27",
+        "completion_date": "2026-11-08T20:51:33",
+        "created_by": {
+         "id": 42,
+         "name": "BEGNI Fabien"
+        },
+        "can_refresh": false
+       }
+      ],
+      "has_pending": false,
+      "default_phone": "694861095",
+      "status": 200,
+      "customstatus": 200
+     }
+    }
+   ],
+   "champs_reponse": [
+    {
+     "name": "mobile_payments[]",
+     "type": "array",
+     "description": "Opération de recharge ou de retrait électronique."
+    },
+    {
+     "name": "mobile_payments[].id",
+     "type": "number",
+     "description": "Identifiant de l'opération."
+    },
+    {
+     "name": "mobile_payments[].name",
+     "type": "string",
+     "description": "Référence RRE/année/numéro."
+    },
+    {
+     "name": "mobile_payments[].operation_type",
+     "type": "string",
+     "description": "deposit (recharge) ou withdrawal (retrait)."
+    },
+    {
+     "name": "mobile_payments[].member.id",
+     "type": "number",
+     "description": "id de la fiche membre."
+    },
+    {
+     "name": "mobile_payments[].member.partner_id",
+     "type": "number",
+     "description": "partner_id du membre (celui de beneficiary-search)."
+    },
+    {
+     "name": "mobile_payments[].member.name",
+     "type": "string",
+     "description": "Nom du membre."
+    },
+    {
+     "name": "mobile_payments[].provider",
+     "type": "string",
+     "description": "MTN_MOMO_CMR ou ORANGE_CMR."
+    },
+    {
+     "name": "mobile_payments[].provider_label",
+     "type": "string",
+     "description": "MTN MoMo ou Orange Money, à afficher."
+    },
+    {
+     "name": "mobile_payments[].phone_number",
+     "type": "string",
+     "description": "Numéro utilisé, avec l'indicatif 237."
+    },
+    {
+     "name": "mobile_payments[].amount",
+     "type": "number",
+     "description": "Montant demandé à l'opérateur : payé sur le téléphone (recharge) ou envoyé dessus (retrait)."
+    },
+    {
+     "name": "mobile_payments[].member_amount",
+     "type": "number",
+     "description": "Montant porté au compte du membre : crédité (recharge) ou débité (retrait)."
+    },
+    {
+     "name": "mobile_payments[].fee_payer",
+     "type": "string",
+     "description": "member ou cooperative, d'après les Paramètres au moment de l'opération."
+    },
+    {
+     "name": "mobile_payments[].fee_rate",
+     "type": "number",
+     "description": "Taux de frais appliqué, en %."
+    },
+    {
+     "name": "mobile_payments[].fee_amount",
+     "type": "number",
+     "description": "Frais en FCFA."
+    },
+    {
+     "name": "mobile_payments[].state",
+     "type": "string",
+     "description": "pending (en attente de l'opérateur), completed (réussie, comptabilisée) ou failed (échouée, rien comptabilisé)."
+    },
+    {
+     "name": "mobile_payments[].failure_reason",
+     "type": "string | null",
+     "description": "Motif de l'échec, lisible, quand state vaut failed."
+    },
+    {
+     "name": "mobile_payments[].request_date",
+     "type": "string (datetime UTC)",
+     "description": "Date de la demande."
+    },
+    {
+     "name": "mobile_payments[].completion_date",
+     "type": "string (datetime UTC) | null",
+     "description": "Date de fin, réussite ou échec."
+    },
+    {
+     "name": "mobile_payments[].created_by.id",
+     "type": "number",
+     "description": "Utilisateur qui a lancé l'opération (« Lancée par »)."
+    },
+    {
+     "name": "mobile_payments[].created_by.name",
+     "type": "string",
+     "description": "Son nom."
+    },
+    {
+     "name": "mobile_payments[].can_refresh",
+     "type": "boolean",
+     "description": "true tant que l'opération est en attente : afficher « Actualiser »."
+    },
+    {
+     "name": "has_pending",
+     "type": "boolean",
+     "description": "true si une recharge ou un retrait est en attente : griser Recharger et Retirer."
+    },
+    {
+     "name": "default_phone",
+     "type": "string | null",
+     "description": "Téléphone de la fiche du membre, pour préremplir le numéro."
+    },
+    {
+     "name": "status",
+     "type": "number",
+     "description": "Code HTTP de la réponse. Presque toujours 200, y compris pour une erreur métier : c'est customstatus qui porte le résultat réel."
+    },
+    {
+     "name": "customstatus",
+     "type": "number",
+     "description": "Code applicatif à tester côté mobile : 200 succès, 400 requête invalide, 401 authentification, 403 accès refusé, 404 introuvable, 500 erreur serveur."
+    },
+    {
+     "name": "error",
+     "type": "string",
+     "description": "Message d'erreur lisible par l'utilisateur, présent uniquement si customstatus n'est pas 200."
+    }
+   ],
+   "erreurs": [
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Authentification requise",
+     "when": "En-tete Authorization absent, ou sans le préfixe 'Bearer '."
+    },
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Token invalide ou expiré",
+     "when": "Jeton illisible, altéré ou expire. Le renouveler via /api/auth/refresh puis rejouer l'appel."
+    },
+    {
+     "status": 200,
+     "customstatus": 404,
+     "message": "Membre introuvable",
+     "when": "L'utilisateur du jeton n'a pas de fiche membre."
+    },
+    {
+     "status": 500,
+     "customstatus": 500,
+     "message": "Une erreur est survenue: <detail>",
+     "when": "Exception non métier. Le détail suit le préfixe."
+    }
+   ]
+  },
+  {
+   "code": "member-mobile-payment-preview",
+   "categorie": "member_mobile_payments",
+   "methode": "GET",
+   "chemin": "/api/auth/member-mobile-payment/preview",
+   "resume": "Avant validation : opérateur proposé d'après le numéro, avertissement éventuel et frais",
+   "acces": "member",
+   "enveloppe": false,
+   "usage": "Formulaire « Recharger mon compte » / « Retirer » : à rappeler à chaque changement de numéro, d'opérateur ou de montant.",
+   "notes": [
+    "L'appli ne calcule rien : l'opérateur, l'avertissement et les frais viennent du serveur, d'après les Paramètres (taux, prise en charge des frais), modifiables sans nouvel APK.",
+    "suggested_provider vient du numéro : le présélectionner, l'utilisateur peut en choisir un autre. Un opérateur qui ne correspond pas au numéro n'est refusé qu'à la validation.",
+    "Lignes Frais et Montant total seulement si show_fees vaut true (frais à la charge du membre).",
+    "can_submit à false (numéro ni MTN ni Orange, opérateur fermé) : bouton de validation désactivé et notice.message affiché."
+   ],
+   "parametres": [
+    {
+     "name": "operation_type",
+     "in": "query",
+     "type": "string",
+     "required": true,
+     "description": "deposit (recharge) ou withdrawal (retrait).",
+     "example": "withdrawal"
+    },
+    {
+     "name": "phone",
+     "in": "query",
+     "type": "string",
+     "required": false,
+     "description": "Numéro saisi, 9 chiffres (avec ou sans 237, espaces acceptés). Incomplet : aucun opérateur proposé, pas d'avertissement.",
+     "example": "694861095"
+    },
+    {
+     "name": "provider",
+     "in": "query",
+     "type": "string",
+     "required": false,
+     "description": "Opérateur choisi, MTN_MOMO_CMR ou ORANGE_CMR. Absent : celui du numéro.",
+     "example": "ORANGE_CMR"
+    },
+    {
+     "name": "amount",
+     "in": "query",
+     "type": "number",
+     "required": false,
+     "description": "Montant saisi : à créditer (recharge) ou à recevoir (retrait).",
+     "example": "10000"
+    }
+   ],
+   "exemple_requete": "GET /api/auth/member-mobile-payment/preview?operation_type=deposit&phone=682441258&amount=10000\nAuthorization: Bearer <token>",
+   "exemples_succes": [
+    {
+     "label": "Numéro MTN, frais à la charge du membre",
+     "body": {
+      "suggested_provider": "MTN_MOMO_CMR",
+      "provider": "MTN_MOMO_CMR",
+      "notice": null,
+      "can_submit": true,
+      "show_fees": true,
+      "fee_rate": 1.75,
+      "fee_amount": 179,
+      "total_amount": 10179,
+      "status": 200,
+      "customstatus": 200
+     }
+    },
+    {
+     "label": "Numéro Nexttel (684)",
+     "body": {
+      "suggested_provider": null,
+      "provider": null,
+      "notice": {
+       "level": "danger",
+       "message": "Ce numéro n'est ni un numéro MTN MoMo ni un numéro Orange Money."
+      },
+      "can_submit": false,
+      "show_fees": false,
+      "fee_rate": null,
+      "fee_amount": null,
+      "total_amount": null,
+      "status": 200,
+      "customstatus": 200
+     }
+    }
+   ],
+   "champs_reponse": [
+    {
+     "name": "suggested_provider",
+     "type": "string | null",
+     "description": "Opérateur du numéro (table des préfixes), null si le numéro est incomplet ou n'est ni MTN ni Orange."
+    },
+    {
+     "name": "provider",
+     "type": "string | null",
+     "description": "Opérateur retenu pour le calcul : celui envoyé, sinon suggested_provider."
+    },
+    {
+     "name": "notice",
+     "type": "object | null",
+     "description": "Avertissement à afficher au-dessus du formulaire."
+    },
+    {
+     "name": "notice.level",
+     "type": "string",
+     "description": "danger (bloquant) ou warning (opérateur ralenti, l'opération reste possible)."
+    },
+    {
+     "name": "notice.message",
+     "type": "string",
+     "description": "Texte à afficher tel quel."
+    },
+    {
+     "name": "can_submit",
+     "type": "boolean",
+     "description": "false : désactiver le bouton de validation."
+    },
+    {
+     "name": "show_fees",
+     "type": "boolean",
+     "description": "true : afficher les lignes Frais et Montant total."
+    },
+    {
+     "name": "fee_rate",
+     "type": "number | null",
+     "description": "Taux en %."
+    },
+    {
+     "name": "fee_amount",
+     "type": "number | null",
+     "description": "Frais en FCFA, arrondis au franc."
+    },
+    {
+     "name": "total_amount",
+     "type": "number | null",
+     "description": "Recharge : montant total à payer sur le téléphone. Retrait : montant total débité du compte du membre."
+    },
+    {
+     "name": "status",
+     "type": "number",
+     "description": "Code HTTP de la réponse. Presque toujours 200, y compris pour une erreur métier : c'est customstatus qui porte le résultat réel."
+    },
+    {
+     "name": "customstatus",
+     "type": "number",
+     "description": "Code applicatif à tester côté mobile : 200 succès, 400 requête invalide, 401 authentification, 403 accès refusé, 404 introuvable, 500 erreur serveur."
+    },
+    {
+     "name": "error",
+     "type": "string",
+     "description": "Message d'erreur lisible par l'utilisateur, présent uniquement si customstatus n'est pas 200."
+    }
+   ],
+   "erreurs": [
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Authentification requise",
+     "when": "En-tete Authorization absent, ou sans le préfixe 'Bearer '."
+    },
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Token invalide ou expiré",
+     "when": "Jeton illisible, altéré ou expire. Le renouveler via /api/auth/refresh puis rejouer l'appel."
+    },
+    {
+     "status": 200,
+     "customstatus": 404,
+     "message": "Membre introuvable",
+     "when": "L'utilisateur du jeton n'a pas de fiche membre."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "operation_type doit être 'deposit' ou 'withdrawal'",
+     "when": "Absent ou autre valeur."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "provider doit être 'MTN_MOMO_CMR' ou 'ORANGE_CMR'",
+     "when": "Autre valeur."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Montant invalide",
+     "when": "amount n'est pas un nombre."
+    },
+    {
+     "status": 500,
+     "customstatus": 500,
+     "message": "Une erreur est survenue: <detail>",
+     "when": "Exception non métier. Le détail suit le préfixe."
+    }
+   ]
+  },
+  {
+   "code": "member-mobile-payment-create",
+   "categorie": "member_mobile_payments",
+   "methode": "POST",
+   "chemin": "/api/auth/member-mobile-payment",
+   "resume": "Recharger mon compte ou retirer, depuis MTN MoMo ou Orange Money",
+   "acces": "member",
+   "enveloppe": false,
+   "usage": "Bouton « Payer » (recharge) ou « Retirer » du formulaire, comme les boutons Recharger / Retirer de la fiche membre dans Odoo.",
+   "notes": [
+    "Toujours sur le compte du membre connecté : aucun membre à envoyer.",
+    "Recharge : le membre valide sur son téléphone avec son code secret ; message à afficher tel quel.",
+    "Retrait : l'argent part vers le numéro saisi dès l'accord de l'opérateur.",
+    "Refus avant l'appel à pawaPay (numéro, opérateur, plafond, solde, opération déjà en cours, statut du membre) : rien n'est enregistré.",
+    "Refus de pawaPay : customstatus 400 avec mobile_payment à l'état failed et son motif dans error ; l'opération reste dans l'historique pour la trace.",
+    "Acceptée : le serveur relit le statut quelques secondes. completed : terminé ; pending : afficher l'opération en attente avec « Actualiser » (refresh)."
+   ],
+   "parametres": [
+    {
+     "name": "operation_type",
+     "in": "body",
+     "type": "string",
+     "required": true,
+     "description": "deposit (recharge) ou withdrawal (retrait).",
+     "example": "withdrawal"
+    },
+    {
+     "name": "phone",
+     "in": "body",
+     "type": "string",
+     "required": true,
+     "description": "Numéro, 9 chiffres (237 facultatif). Prérempli avec le phone de beneficiary-search s'il existe.",
+     "example": "694861095"
+    },
+    {
+     "name": "provider",
+     "in": "body",
+     "type": "string",
+     "required": true,
+     "description": "MTN_MOMO_CMR ou ORANGE_CMR, proposé par preview, modifiable.",
+     "example": "ORANGE_CMR"
+    },
+    {
+     "name": "amount",
+     "in": "body",
+     "type": "number",
+     "required": true,
+     "description": "Montant entier en FCFA : à créditer (recharge) ou à recevoir (retrait).",
+     "example": "10000"
+    }
+   ],
+   "exemple_requete": "POST /api/auth/member-mobile-payment\nAuthorization: Bearer <token>\nContent-Type: application/json\n\n{\n  \"operation_type\": \"deposit\",\n  \"phone\": \"682441258\",\n  \"provider\": \"MTN_MOMO_CMR\",\n  \"amount\": 10000\n}",
+   "exemples_succes": [
+    {
+     "label": "Recharge envoyée, à valider sur le téléphone",
+     "body": {
+      "mobile_payment": {
+       "id": 7,
+       "name": "RRE/2026/00007",
+       "operation_type": "deposit",
+       "member": {
+        "id": 26,
+        "partner_id": 245,
+        "name": "BEGNI Fabien"
+       },
+       "provider": "MTN_MOMO_CMR",
+       "provider_label": "MTN MoMo",
+       "phone_number": "237682441258",
+       "amount": 10179,
+       "member_amount": 10000,
+       "fee_payer": "member",
+       "fee_rate": 1.75,
+       "fee_amount": 179,
+       "state": "pending",
+       "failure_reason": null,
+       "request_date": "2026-11-08T20:51:27",
+       "completion_date": null,
+       "created_by": {
+        "id": 42,
+        "name": "BEGNI Fabien"
+       },
+       "can_refresh": true
+      },
+      "message": "Validez le paiement de 10 179 FCFA sur votre téléphone avec votre code secret. Votre compte sera crédité dès la confirmation de l'opérateur.",
+      "status": 200,
+      "customstatus": 200
+     }
+    }
+   ],
+   "champs_reponse": [
+    {
+     "name": "mobile_payment",
+     "type": "object",
+     "description": "Opération de recharge ou de retrait électronique."
+    },
+    {
+     "name": "mobile_payment.id",
+     "type": "number",
+     "description": "Identifiant de l'opération."
+    },
+    {
+     "name": "mobile_payment.name",
+     "type": "string",
+     "description": "Référence RRE/année/numéro."
+    },
+    {
+     "name": "mobile_payment.operation_type",
+     "type": "string",
+     "description": "deposit (recharge) ou withdrawal (retrait)."
+    },
+    {
+     "name": "mobile_payment.member.id",
+     "type": "number",
+     "description": "id de la fiche membre."
+    },
+    {
+     "name": "mobile_payment.member.partner_id",
+     "type": "number",
+     "description": "partner_id du membre (celui de beneficiary-search)."
+    },
+    {
+     "name": "mobile_payment.member.name",
+     "type": "string",
+     "description": "Nom du membre."
+    },
+    {
+     "name": "mobile_payment.provider",
+     "type": "string",
+     "description": "MTN_MOMO_CMR ou ORANGE_CMR."
+    },
+    {
+     "name": "mobile_payment.provider_label",
+     "type": "string",
+     "description": "MTN MoMo ou Orange Money, à afficher."
+    },
+    {
+     "name": "mobile_payment.phone_number",
+     "type": "string",
+     "description": "Numéro utilisé, avec l'indicatif 237."
+    },
+    {
+     "name": "mobile_payment.amount",
+     "type": "number",
+     "description": "Montant demandé à l'opérateur : payé sur le téléphone (recharge) ou envoyé dessus (retrait)."
+    },
+    {
+     "name": "mobile_payment.member_amount",
+     "type": "number",
+     "description": "Montant porté au compte du membre : crédité (recharge) ou débité (retrait)."
+    },
+    {
+     "name": "mobile_payment.fee_payer",
+     "type": "string",
+     "description": "member ou cooperative, d'après les Paramètres au moment de l'opération."
+    },
+    {
+     "name": "mobile_payment.fee_rate",
+     "type": "number",
+     "description": "Taux de frais appliqué, en %."
+    },
+    {
+     "name": "mobile_payment.fee_amount",
+     "type": "number",
+     "description": "Frais en FCFA."
+    },
+    {
+     "name": "mobile_payment.state",
+     "type": "string",
+     "description": "pending (en attente de l'opérateur), completed (réussie, comptabilisée) ou failed (échouée, rien comptabilisé)."
+    },
+    {
+     "name": "mobile_payment.failure_reason",
+     "type": "string | null",
+     "description": "Motif de l'échec, lisible, quand state vaut failed."
+    },
+    {
+     "name": "mobile_payment.request_date",
+     "type": "string (datetime UTC)",
+     "description": "Date de la demande."
+    },
+    {
+     "name": "mobile_payment.completion_date",
+     "type": "string (datetime UTC) | null",
+     "description": "Date de fin, réussite ou échec."
+    },
+    {
+     "name": "mobile_payment.created_by.id",
+     "type": "number",
+     "description": "Utilisateur qui a lancé l'opération (« Lancée par »)."
+    },
+    {
+     "name": "mobile_payment.created_by.name",
+     "type": "string",
+     "description": "Son nom."
+    },
+    {
+     "name": "mobile_payment.can_refresh",
+     "type": "boolean",
+     "description": "true tant que l'opération est en attente : afficher « Actualiser »."
+    },
+    {
+     "name": "message",
+     "type": "string",
+     "description": "Message lisible."
+    },
+    {
+     "name": "status",
+     "type": "number",
+     "description": "Code HTTP de la réponse. Presque toujours 200, y compris pour une erreur métier : c'est customstatus qui porte le résultat réel."
+    },
+    {
+     "name": "customstatus",
+     "type": "number",
+     "description": "Code applicatif à tester côté mobile : 200 succès, 400 requête invalide, 401 authentification, 403 accès refusé, 404 introuvable, 500 erreur serveur."
+    },
+    {
+     "name": "error",
+     "type": "string",
+     "description": "Message d'erreur lisible par l'utilisateur, présent uniquement si customstatus n'est pas 200."
+    }
+   ],
+   "erreurs": [
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Authentification requise",
+     "when": "En-tete Authorization absent, ou sans le préfixe 'Bearer '."
+    },
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Token invalide ou expiré",
+     "when": "Jeton illisible, altéré ou expire. Le renouveler via /api/auth/refresh puis rejouer l'appel."
+    },
+    {
+     "status": 200,
+     "customstatus": 404,
+     "message": "Membre introuvable",
+     "when": "L'utilisateur du jeton n'a pas de fiche membre."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Format JSON invalide",
+     "when": "Corps absent ou mal formé."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Paramètre(s) manquant(s): <liste>",
+     "when": "partner_id, operation_type, phone, provider ou amount absent."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "operation_type doit être 'deposit' ou 'withdrawal'",
+     "when": "Autre valeur."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "provider doit être 'MTN_MOMO_CMR' ou 'ORANGE_CMR'",
+     "when": "Autre valeur."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Numéro de téléphone invalide : saisissez les 9 chiffres du numéro camerounais (par exemple 6XX XX XX XX).",
+     "when": "Numéro mal formé. Rien n'est enregistré."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Ce numéro n'est ni un numéro MTN MoMo ni un numéro Orange Money.",
+     "when": "Préfixe Nexttel, Camtel ou inconnu. Rien n'est enregistré."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Ce numéro est un numéro <opérateur> et non <opérateur choisi>.",
+     "when": "Opérateur choisi différent de celui du numéro. Rien n'est enregistré."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Le montant doit être un nombre entier de FCFA, supérieur à zéro.",
+     "when": "Montant nul, négatif ou avec des décimales."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Une recharge ou un retrait est déjà en cours sur ce compte. Attendez son résultat avant d'en lancer un autre.",
+     "when": "Le membre a déjà une opération en attente."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Solde insuffisant pour ce retrait.",
+     "when": "Retrait : le total à débiter dépasse le solde du membre."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Retrait impossible : le compte est au statut « <statut> ».",
+     "when": "Retrait pour un membre qui n'est pas en règle."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "<motif de l'échec>",
+     "when": "Refus de pawaPay ou de l'opérateur : mobile_payment est renvoyé à l'état failed avec failure_reason. Aucune écriture."
+    },
+    {
+     "status": 200,
+     "customstatus": 400,
+     "message": "Ce compte a été supprimé.",
+     "when": "Fiche membre supprimée."
+    },
+    {
+     "status": 500,
+     "customstatus": 500,
+     "message": "Une erreur est survenue: <detail>",
+     "when": "Exception non métier. Le détail suit le préfixe."
+    }
+   ]
+  },
+  {
+   "code": "member-mobile-payment-refresh",
+   "categorie": "member_mobile_payments",
+   "methode": "POST",
+   "chemin": "/api/auth/member-mobile-payment/{payment_id}/refresh",
+   "resume": "Relit tout de suite le statut de ma recharge ou de mon retrait en attente",
+   "acces": "member",
+   "enveloppe": false,
+   "usage": "Bouton « Actualiser » d'une opération en attente (can_refresh), comme sur la fiche membre dans Odoo.",
+   "notes": [
+    "Si l'opération vient de réussir, elle est comptabilisée pendant l'appel et revient à l'état completed.",
+    "Sans appel, une action planifiée relit les opérations en attente chaque minute.",
+    "has_pending est renvoyé à jour : réactiver Recharger et Retirer quand il repasse à false."
+   ],
+   "parametres": [
+    {
+     "name": "payment_id",
+     "in": "path",
+     "type": "number",
+     "required": true,
+     "description": "id de l'opération.",
+     "example": "7"
+    }
+   ],
+   "exemple_requete": "POST /api/auth/member-mobile-payment/7/refresh\nAuthorization: Bearer <token>",
+   "exemples_succes": [
+    {
+     "body": {
+      "mobile_payment": {
+       "id": 7,
+       "name": "RRE/2026/00007",
+       "operation_type": "withdrawal",
+       "member": {
+        "id": 26,
+        "partner_id": 245,
+        "name": "BEGNI Fabien"
+       },
+       "provider": "ORANGE_CMR",
+       "provider_label": "Orange Money",
+       "phone_number": "237694861095",
+       "amount": 10000,
+       "member_amount": 10102,
+       "fee_payer": "member",
+       "fee_rate": 1.0,
+       "fee_amount": 102,
+       "state": "completed",
+       "failure_reason": null,
+       "request_date": "2026-11-08T20:51:27",
+       "completion_date": "2026-11-08T20:51:33",
+       "created_by": {
+        "id": 42,
+        "name": "BEGNI Fabien"
+       },
+       "can_refresh": false
+      },
+      "has_pending": false,
+      "status": 200,
+      "customstatus": 200
+     }
+    }
+   ],
+   "champs_reponse": [
+    {
+     "name": "mobile_payment",
+     "type": "object",
+     "description": "Opération de recharge ou de retrait électronique."
+    },
+    {
+     "name": "mobile_payment.id",
+     "type": "number",
+     "description": "Identifiant de l'opération."
+    },
+    {
+     "name": "mobile_payment.name",
+     "type": "string",
+     "description": "Référence RRE/année/numéro."
+    },
+    {
+     "name": "mobile_payment.operation_type",
+     "type": "string",
+     "description": "deposit (recharge) ou withdrawal (retrait)."
+    },
+    {
+     "name": "mobile_payment.member.id",
+     "type": "number",
+     "description": "id de la fiche membre."
+    },
+    {
+     "name": "mobile_payment.member.partner_id",
+     "type": "number",
+     "description": "partner_id du membre (celui de beneficiary-search)."
+    },
+    {
+     "name": "mobile_payment.member.name",
+     "type": "string",
+     "description": "Nom du membre."
+    },
+    {
+     "name": "mobile_payment.provider",
+     "type": "string",
+     "description": "MTN_MOMO_CMR ou ORANGE_CMR."
+    },
+    {
+     "name": "mobile_payment.provider_label",
+     "type": "string",
+     "description": "MTN MoMo ou Orange Money, à afficher."
+    },
+    {
+     "name": "mobile_payment.phone_number",
+     "type": "string",
+     "description": "Numéro utilisé, avec l'indicatif 237."
+    },
+    {
+     "name": "mobile_payment.amount",
+     "type": "number",
+     "description": "Montant demandé à l'opérateur : payé sur le téléphone (recharge) ou envoyé dessus (retrait)."
+    },
+    {
+     "name": "mobile_payment.member_amount",
+     "type": "number",
+     "description": "Montant porté au compte du membre : crédité (recharge) ou débité (retrait)."
+    },
+    {
+     "name": "mobile_payment.fee_payer",
+     "type": "string",
+     "description": "member ou cooperative, d'après les Paramètres au moment de l'opération."
+    },
+    {
+     "name": "mobile_payment.fee_rate",
+     "type": "number",
+     "description": "Taux de frais appliqué, en %."
+    },
+    {
+     "name": "mobile_payment.fee_amount",
+     "type": "number",
+     "description": "Frais en FCFA."
+    },
+    {
+     "name": "mobile_payment.state",
+     "type": "string",
+     "description": "pending (en attente de l'opérateur), completed (réussie, comptabilisée) ou failed (échouée, rien comptabilisé)."
+    },
+    {
+     "name": "mobile_payment.failure_reason",
+     "type": "string | null",
+     "description": "Motif de l'échec, lisible, quand state vaut failed."
+    },
+    {
+     "name": "mobile_payment.request_date",
+     "type": "string (datetime UTC)",
+     "description": "Date de la demande."
+    },
+    {
+     "name": "mobile_payment.completion_date",
+     "type": "string (datetime UTC) | null",
+     "description": "Date de fin, réussite ou échec."
+    },
+    {
+     "name": "mobile_payment.created_by.id",
+     "type": "number",
+     "description": "Utilisateur qui a lancé l'opération (« Lancée par »)."
+    },
+    {
+     "name": "mobile_payment.created_by.name",
+     "type": "string",
+     "description": "Son nom."
+    },
+    {
+     "name": "mobile_payment.can_refresh",
+     "type": "boolean",
+     "description": "true tant que l'opération est en attente : afficher « Actualiser »."
+    },
+    {
+     "name": "has_pending",
+     "type": "boolean",
+     "description": "Opération encore en attente sur le compte du membre."
+    },
+    {
+     "name": "status",
+     "type": "number",
+     "description": "Code HTTP de la réponse. Presque toujours 200, y compris pour une erreur métier : c'est customstatus qui porte le résultat réel."
+    },
+    {
+     "name": "customstatus",
+     "type": "number",
+     "description": "Code applicatif à tester côté mobile : 200 succès, 400 requête invalide, 401 authentification, 403 accès refusé, 404 introuvable, 500 erreur serveur."
+    },
+    {
+     "name": "error",
+     "type": "string",
+     "description": "Message d'erreur lisible par l'utilisateur, présent uniquement si customstatus n'est pas 200."
+    }
+   ],
+   "erreurs": [
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Authentification requise",
+     "when": "En-tete Authorization absent, ou sans le préfixe 'Bearer '."
+    },
+    {
+     "status": 200,
+     "customstatus": 401,
+     "message": "Token invalide ou expiré",
+     "when": "Jeton illisible, altéré ou expire. Le renouveler via /api/auth/refresh puis rejouer l'appel."
+    },
+    {
+     "status": 200,
+     "customstatus": 404,
+     "message": "Membre introuvable",
+     "when": "L'utilisateur du jeton n'a pas de fiche membre."
+    },
+    {
+     "status": 200,
+     "customstatus": 404,
+     "message": "Opération introuvable",
+     "when": "payment_id inconnu ou opération d'un autre membre."
+    },
+    {
+     "status": 500,
+     "customstatus": 500,
+     "message": "Une erreur est survenue: <detail>",
+     "when": "Exception non métier. Le détail suit le préfixe."
     }
    ]
   },

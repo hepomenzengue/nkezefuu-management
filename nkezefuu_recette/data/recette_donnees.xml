@@ -1496,4 +1496,145 @@
         <field name="tour">1</field>
     </record>
 
+
+    <!-- ====================================================================== -->
+    <!-- Recharger et retirer (membre, sur son propre compte) -->
+    <!-- ====================================================================== -->
+    <record id="cas_rrr_boutons" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'solde')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Accueil</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Ouvrir l'accueil sans opération en attente.</field>
+        <field name="attendu">La carte du solde affiche le solde réel et les boutons « Recharger » et « Retirer », actifs.</field>
+    </record>
+    <record id="cas_rrr_boutons_grises" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'solde')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Accueil</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Lancer une recharge sans la valider sur le téléphone, puis revenir à l'accueil.</field>
+        <field name="attendu">Les boutons « Recharger » et « Retirer » sont grisés. La mention « Recharge ou retrait en cours » et le lien « Actualiser » s'affichent.</field>
+    </record>
+    <record id="cas_rrr_historique" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'historique')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Mes recharges et retraits</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Ouvrir « Mes recharges et retraits ».</field>
+        <field name="attendu">La liste affiche ses opérations, réussies, en attente et échouées, de la plus récente à la plus ancienne, avec la date, la référence, le type, l'opérateur, le téléphone, les montants, le statut et le motif d'un échec. Aucune opération d'un autre membre n'apparaît.</field>
+    </record>
+    <record id="cas_rrr_telephone_fiche" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Avec un numéro de téléphone sur sa fiche, toucher « Recharger ».</field>
+        <field name="attendu">Le numéro de la fiche est prérempli et reste modifiable. L'opérateur correspondant est présélectionné.</field>
+    </record>
+    <record id="cas_rrr_telephone_vide" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre sans téléphone sur sa fiche</field>
+        <field name="action">Toucher « Recharger ».</field>
+        <field name="attendu">Le champ du numéro est vide.</field>
+    </record>
+    <record id="cas_rrr_prefixes" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Saisir successivement un numéro commençant par 686, par 640, puis par 680.</field>
+        <field name="attendu">Orange Money est présélectionné pour les deux premiers numéros, MTN MoMo pour le troisième.</field>
+    </record>
+    <record id="cas_rrr_nexttel" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">40</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Saisir un numéro commençant par 684.</field>
+        <field name="attendu">Le message « Ce numéro n'est ni un numéro MTN MoMo ni un numéro Orange Money. » s'affiche. Le bouton « Payer » est inactif.</field>
+    </record>
+    <record id="cas_rrr_frais" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">50</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Avec les frais à la charge du membre, saisir 10 000 avec MTN MoMo, puis changer d'opérateur.</field>
+        <field name="attendu">Les lignes Frais et « Montant total à payer » s'affichent (179 et 10 179 FCFA avec le taux par défaut) et se recalculent au changement d'opérateur.</field>
+    </record>
+    <record id="cas_rrr_mauvais_operateur" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">60</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Saisir un numéro MTN, choisir Orange Money, puis toucher « Payer ».</field>
+        <field name="attendu">La recharge est refusée avec le message « Ce numéro est un numéro MTN MoMo et non Orange Money. ». Aucune opération n'est ajoutée à la liste.</field>
+    </record>
+    <record id="cas_rrr_recharge_reussie" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'recharger')]"/>
+        <field name="sequence">70</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Lancer une recharge, puis la valider sur le téléphone avec le code secret.</field>
+        <field name="attendu">Le message demande de valider le paiement sur le téléphone. Après validation, l'opération passe à l'état réussi et le solde augmente du montant à créditer.</field>
+    </record>
+    <record id="cas_rrr_retrait_frais" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'retirer')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Retirer</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Avec les frais à la charge du membre, saisir un montant à recevoir.</field>
+        <field name="attendu">Les lignes Frais et « Montant total à débiter » s'affichent. Le bouton s'intitule « Retirer ».</field>
+    </record>
+    <record id="cas_rrr_retrait_solde" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'retirer')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Retirer</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Lancer un retrait dont le montant total dépasse le solde.</field>
+        <field name="attendu">Le retrait est refusé avec le message « Solde insuffisant pour ce retrait. ». Aucune opération n'est ajoutée à la liste.</field>
+    </record>
+    <record id="cas_rrr_retrait_statut" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'retirer')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Retirer</field>
+        <field name="profil">Membre qui n'est pas en règle</field>
+        <field name="action">Lancer un retrait.</field>
+        <field name="attendu">Le retrait est refusé. Le message indique le statut du compte.</field>
+    </record>
+    <record id="cas_rrr_retrait_reussi" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'retirer')]"/>
+        <field name="sequence">40</field>
+        <field name="ecran">Retirer</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Lancer un retrait couvert par le solde.</field>
+        <field name="attendu">Le montant est envoyé sur le téléphone. Le solde diminue du montant total à débiter.</field>
+    </record>
+    <record id="cas_rrr_echec" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'resultat')]"/>
+        <field name="sequence">10</field>
+        <field name="ecran">Mes recharges et retraits</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Lancer une opération refusée par l'opérateur.</field>
+        <field name="attendu">Le motif du refus s'affiche. L'opération figure dans la liste à l'état échoué. Le solde est inchangé et les boutons redeviennent actifs.</field>
+    </record>
+    <record id="cas_rrr_actualiser" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'resultat')]"/>
+        <field name="sequence">20</field>
+        <field name="ecran">Accueil</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Sur une opération en attente validée entre-temps chez l'opérateur, toucher « Actualiser ».</field>
+        <field name="attendu">Le statut passe à réussi, le solde est mis à jour et les boutons redeviennent actifs.</field>
+    </record>
+    <record id="cas_rrr_deuxieme" model="nkezefuu.recette.cas">
+        <field name="etape_id" search="[('parcours_id.code', '=', 'recharger-et-retirer'), ('cle', '=', 'resultat')]"/>
+        <field name="sequence">30</field>
+        <field name="ecran">Recharger mon compte</field>
+        <field name="profil">Membre en règle</field>
+        <field name="action">Avec une opération en attente, tenter d'en lancer une deuxième.</field>
+        <field name="attendu">Les boutons sont grisés. Si la demande parvient malgré tout au serveur, elle est refusée avec le message indiquant qu'une opération est déjà en cours.</field>
+    </record>
+
 </odoo>
